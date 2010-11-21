@@ -8,7 +8,7 @@
 #include <OneWire.h>
 
 Port WaterSensor (1); // measures restance drop on A1 to signal water 'over' the pump
-//Port Pump (2); // switches the pump on and off
+Port FlowPump (2); // The flow pump measurement
 //Port Temp (3); // 3 x DS18B20 temp sensors measuring panel in/out temp and outside temp
 Port authLed (4); 
 
@@ -32,6 +32,7 @@ struct {
     int tempIn:  10; // temperature panel in
     int tempOut:  10; // temperature panel out
     int tempAmb:  10; // temperature outside
+    int flow: 0; // The water flow speed.
 } payload;
 
 typedef struct {
@@ -85,6 +86,19 @@ unsigned long waterTime = 0; // to delay the water sersor reading
 byte needToSend = false;
 boolean tempAsked = false;
 
+volatile int NbTopsFan; //measuring the rising edges of the signal
+int Calc;                               
+//int hallsensor = 2;    //The pin location of the sensor
+
+/**
+ * Interupt controller for the flow meter
+ */
+void rpm ()     //This is the function that the interupt calls 
+{ 
+  NbTopsFan++;  //This function measures the rising and falling edge of the hall effect sensors signal
+}
+
+
 /**
  * Function receive data
  */
@@ -116,7 +130,10 @@ void setup() {
   authLed.mode(OUTPUT);
   authLed.digiWrite(0);
   
-  //initOneWire();
+  FlowPump.mode3(INPUT);
+  attachInterrupt(1, rpm, RISING);
+  
+  initOneWire();
 }
 
 /**
@@ -147,12 +164,19 @@ void loop() {
     
     if (tempAsked)
     {
+      // Get flow
+      cli();      //Disable interrupts
+      payload.flow = (NbTopsFan * 60 / 7.5); //(Pulse frequency x 60) / 7.5Q, = flow rate 
+      
       Serial.print("Read temp ");
       payload.tempOut = readTemp1wire();
       tempAsked = false;
     }
     else
     {
+      // Start counting flow
+      NbTopsFan = 0;   //Set NbTops to 0 ready for calculations
+      sei(); // Enable interupts
       Serial.print("Ask temp ");
       askTemp1Wire();
       tempAsked = true;
@@ -180,5 +204,7 @@ void loop() {
     Serial.print("Temperatuur uit: ");
     Serial.print(payload.tempOut);
     Serial.println("e-1 C");
+    Serial.print(payload.flow, DEC); //Prints the number calculated above
+    Serial.print(" L/hour\r\n"); //Prints "L/hour" and returns a  new line
   }
 }
