@@ -6,6 +6,7 @@
 #include <RF12.h> // needed to avoid a linker error :(
 #include <avr/sleep.h>
 #include <OneWire.h>
+#include <payload.h>
 
 Port WaterSensor (1); // measures restance drop on A1 to signal water 'over' the pump
 Port FlowPump (2); // The flow pump measurement
@@ -26,14 +27,6 @@ static uint8_t initOneWire () {
     }
     ds18b20.reset();
 }
-
-struct {
-    byte pump;      // pump on or off
-    int tempIn:  10; // temperature panel in
-    int tempOut:  10; // temperature panel out
-    int tempAmb:  10; // temperature outside
-    int flow: 0; // The water flow speed.
-} payload;
 
 typedef struct {
   byte pump; // is the pump needed?
@@ -85,6 +78,7 @@ unsigned long receivedTime = 0; // to expire pump on message
 unsigned long waterTime = 0; // to delay the water sersor reading
 byte needToSend = false;
 boolean tempAsked = false;
+payload payloadData;
 
 volatile int NbTopsFan; //measuring the rising edges of the signal
 int Calc;                               
@@ -156,8 +150,8 @@ void loop() {
   
   authLed.digiWrite(needPump); // debug led to see if pump needed
   
-  payload.pump = PumpOn;
- // payload.tempOut = readout1wire();
+  payloadData.pump = PumpOn;
+ // payloadData.tempOut = readout1wire();
 
   if (sendTimerPanel.poll(1000)) {
     needToSend = true;
@@ -166,10 +160,10 @@ void loop() {
     {
       // Get flow
       cli();      //Disable interrupts
-      payload.flow = (NbTopsFan * 60 / 7.5); //(Pulse frequency x 60) / 7.5Q, = flow rate 
+      payloadData.flow = (NbTopsFan * 60 / 7.5); //(Pulse frequency x 60) / 7.5Q, = flow rate 
       
       Serial.print("Read temp ");
-      payload.tempOut = readTemp1wire();
+      payloadData.tempOut = readTemp1wire();
       tempAsked = false;
     }
     else
@@ -187,12 +181,19 @@ void loop() {
     needToSend = false;
     if (rf12_canSend())
     {
-      rf12_sendStart(1, &payload, sizeof payload);
-      //Serial.println("'\nData send");
+      char* dataByte = NULL;
+      dataByte = (char*) &payloadData;
+   
+      Serial.print("\nData send: ");
+      for (int i; i < sizeof payloadData; i++)
+        Serial.print(dataByte[i], HEX);
+      Serial.print("\n");
+      
+      rf12_sendStart(1, &payloadData, sizeof payloadData);
     }
     else
     {
-      Serial.println("Error can't send. canSend returned false'");
+      Serial.println("Error can't send. canSend returned 'false'");
     }
     
     Serial.print("need pump:");
@@ -202,9 +203,9 @@ void loop() {
     Serial.print("water:");
     Serial.println(WaterSensor.anaRead());
     Serial.print("Temperatuur uit: ");
-    Serial.print(payload.tempOut);
+    Serial.print(payloadData.tempOut);
     Serial.println("e-1 C");
-    Serial.print(payload.flow, DEC); //Prints the number calculated above
+    Serial.print(payloadData.flow, DEC); //Prints the number calculated above
     Serial.print(" L/hour\r\n"); //Prints "L/hour" and returns a  new line
   }
 }
