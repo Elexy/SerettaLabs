@@ -13,7 +13,7 @@
 #include <Ports.h>
 #include <RF12.h>
 #include <avr/eeprom.h>
-#include <../payload.h>
+#include <payload.h>
 #include <stdio.h>
 
 #define DEBUG 1 // set to 1 to show incoming requests on serial port
@@ -46,7 +46,7 @@ static char outCount = -1;
 #define MYNODE 31
 
 #define NUM_MESSAGES  10    // Number of messages saved in history
-#define MESSAGE_TRUNC 15    // Truncate message payload to reduce memory use
+#define MESSAGE_TRUNC 25   // Truncate message payload to reduce memory use
 
 static byte buf[1000];      // tcp/ip send and receive buffer
 static BufferFiller bfill;  // uased as cursor while filling the buffer
