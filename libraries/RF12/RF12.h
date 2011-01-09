@@ -1,6 +1,6 @@
 // RFM12B driver definitions
 // 2009-02-09 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id: RF12.h 5976 2010-08-30 09:34:05Z jcw $
+// $Id: RF12.h 6394 2010-12-10 19:25:04Z jcw $
 
 #ifndef RF12_h
 #define RF12_h
@@ -11,9 +11,10 @@
 // version 2 does include the group code in the crc
 #define RF12_VERSION    2
 
-#define rf12_hdr        rf12_buf[0]
-#define rf12_len        rf12_buf[1]
-#define rf12_data       (rf12_buf + 2)
+#define rf12_grp        rf12_buf[0]
+#define rf12_hdr        rf12_buf[1]
+#define rf12_len        rf12_buf[2]
+#define rf12_data       (rf12_buf + 3)
 
 #define RF12_HDR_CTL    0x80
 #define RF12_HDR_DST    0x40
@@ -31,6 +32,11 @@
 #define RF12_EEPROM_SIZE 32
 #define RF12_EEPROM_EKEY (RF12_EEPROM_ADDR + RF12_EEPROM_SIZE)
 #define RF12_EEPROM_ELEN 16
+
+// shorthand to simplify sending out the proper ACK when requested
+#define RF12_WANTS_ACK ((rf12_hdr & RF12_HDR_ACK) && !(rf12_hdr & RF12_HDR_CTL))
+#define RF12_ACK_REPLY (rf12_hdr & RF12_HDR_DST ? RF12_HDR_CTL : \
+            RF12_HDR_CTL | RF12_HDR_DST | (rf12_hdr & RF12_HDR_MASK))
 
 extern volatile uint16_t rf12_crc;  // running crc value, should be zero at end
 extern volatile uint8_t rf12_buf[]; // recv/xmit buf including hdr & crc bytes
@@ -52,8 +58,13 @@ uint8_t rf12_recvDone(void);
 uint8_t rf12_canSend(void);
 
 // call this only when rf12_recvDone() or rf12_canSend() return true
+void rf12_sendStart(uint8_t hdr);
 void rf12_sendStart(uint8_t hdr, const void* ptr, uint8_t len);
+// deprecated: use rf12_sendStart(hdr,ptr,len) followed by rf12_sendWait(sync)
 void rf12_sendStart(uint8_t hdr, const void* ptr, uint8_t len, uint8_t sync);
+
+// wait for send to finish, sleep mode: 0=none, 1=idle, 2=standby, 3=powerdown
+void rf12_sendWait (uint8_t mode);
 
 // this simulates OOK by turning the transmitter on and off via SPI commands
 // use this only when the radio was initialized with a fake zero node ID

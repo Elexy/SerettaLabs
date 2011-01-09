@@ -1,6 +1,6 @@
 // RFM12B driver implementation
 // 2009-02-09 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id: RF12.cpp 5976 2010-08-30 09:34:05Z jcw $
+// $Id: RF12.cpp 6019M 2010-11-18 03:45:19Z (local) $
 
 #include "RF12.h"
 #include <avr/io.h>
@@ -9,22 +9,41 @@
 #include <avr/sleep.h>
 #include <WProgram.h>
 
-// maximum transmit / receive buffer: 2 header + data + 2 crc bytes
-#define RF_MAX   (RF12_MAXDATA + 4)
+// maximum transmit / receive buffer: 3 header + data + 2 crc bytes
+#define RF_MAX   (RF12_MAXDATA + 5)
 
 // pins used for the RFM12B interface
 #if defined(__AVR_ATmega1280__)
-#define RFM_IRQ  2
-#define SPI_SS   53
-#define SPI_MOSI 51
-#define SPI_MISO 50
-#define SPI_SCK  52
+
+#define RFM_IRQ     2
+#define SS_PORT     PORTB
+#define SS_BIT      0
+#define SPI_SS      53
+#define SPI_MOSI    51
+#define SPI_MISO    50
+#define SPI_SCK     52
+
+#elif defined(__AVR_ATtiny84__)
+
+#define RFM_IRQ     2
+#define SS_PORT     PORTA
+#define SS_BIT      7
+#define SPI_SS      3
+#define SPI_MISO    5
+#define SPI_MOSI    4
+#define SPI_SCK     6
+
 #else
-#define RFM_IRQ  2
-#define SPI_SS   10
-#define SPI_MOSI 11
-#define SPI_MISO 12
-#define SPI_SCK  13
+
+// ATmega328, etc.
+#define RFM_IRQ     2
+#define SS_PORT     PORTB
+#define SS_BIT      2
+#define SPI_SS      10
+#define SPI_MOSI    11
+#define SPI_MISO    12
+#define SPI_SCK     13
+
 #endif 
 
 // RF12 command codes
@@ -55,7 +74,6 @@ enum {
 
 static uint8_t nodeid;              // address of this node
 static uint8_t group;               // network group
-static uint16_t crcInit;            // initial crc value
 static volatile uint8_t rxfill;     // number of data bytes in rf12_buf
 static volatile int8_t rxstate;     // current transceiver state
 
@@ -82,7 +100,7 @@ static void spi_initialize () {
     pinMode(SPI_MOSI, OUTPUT);
     pinMode(SPI_MISO, INPUT);
     pinMode(SPI_SCK, OUTPUT);
-    
+#ifdef SPCR    
 #if F_CPU <= 10000000
     // clk/4 is ok for the RF12's SPI
     SPCR = _BV(SPE) | _BV(MSTR);
@@ -91,67 +109,94 @@ static void spi_initialize () {
     SPCR = _BV(SPE) | _BV(MSTR) | _BV(SPR0);
     SPSR |= _BV(SPI2X);
 #endif
+#else
+    // ATtiny
+    USICR = bit(USIWM0);
+#endif
+}
+
+static uint8_t rf12_byte (uint8_t out) {
+#ifdef SPDR
+    SPDR = out;
+    // this loop spins 4 usec with a 2 MHz SPI clock
+    while (!(SPSR & _BV(SPIF)))
+        ;
+    return SPDR;
+#else
+    // ATtiny
+    USIDR = out;
+    byte v1 = bit(USIWM0) | bit(USITC);
+    byte v2 = bit(USIWM0) | bit(USITC) | bit(USICLK);
+#if F_CPU <= 5000000
+    // only unroll if resulting clock stays under 2.5 MHz
+    USICR = v1; USICR = v2;
+    USICR = v1; USICR = v2;
+    USICR = v1; USICR = v2;
+    USICR = v1; USICR = v2;
+    USICR = v1; USICR = v2;
+    USICR = v1; USICR = v2;
+    USICR = v1; USICR = v2;
+    USICR = v1; USICR = v2;
+#else
+    for (uint8_t i = 0; i < 8; ++i) {
+        USICR = v1;
+        USICR = v2;
+    }
+#endif
+    return USIDR;
+#endif
 }
 
 static uint16_t rf12_xfer (uint16_t cmd) {
-    // the 2 loops below each spin 4 usec with a 2 MHz SPI clock
-    uint16_t reply;
-#if SPI_SS == 10
-    bitClear(PORTB, 2); // much faster
-#elif SPI_SS == 53
-    bitClear(PORTB, 0); // much faster
-#else
-    digitalWrite(SPI_SS, 0);
-#endif
-    SPDR = cmd >> 8;
-    while (!(SPSR & _BV(SPIF)))
-        ;
-    reply = SPDR << 8;
-    SPDR = cmd;
-    while (!(SPSR & _BV(SPIF)))
-        ;
-    reply |= SPDR;
-#if SPI_SS == 10
-    bitSet(PORTB, 2); // much faster
-#elif SPI_SS == 53
-    bitSet(PORTB, 0); // much faster
-#else
-    digitalWrite(SPI_SS, 1);
-#endif
+    bitClear(SS_PORT, SS_BIT);
+    uint16_t reply = rf12_byte(cmd >> 8) << 8;
+    reply |= rf12_byte(cmd);
+    bitSet(SS_PORT, SS_BIT);
     return reply;
 }
 
 // access to the RFM12B internal registers with interrupts disabled
 uint16_t rf12_control(uint16_t cmd) {
+#ifdef EIMSK
     bitClear(EIMSK, INT0);
     uint16_t r = rf12_xfer(cmd);
     bitSet(EIMSK, INT0);
+#else
+    // ATtiny
+    bitClear(GIMSK, INT0);
+    uint16_t r = rf12_xfer(cmd);
+    bitSet(GIMSK, INT0);
+#endif
     return r;
 }
 
 static void rf12_interrupt() {
+bitSet(PINB, 0);
     // a transfer of 2x 16 bits @ 2 MHz over SPI takes 2x 8 us inside this ISR
     rf12_xfer(0x0000);
     
     if (rxstate == TXRECV) {
         uint8_t in = rf12_xfer(RF_RX_FIFO_READ);
 
+        if (rxfill == 0 && group != 0)
+            rf12_buf[rxfill++] = group;
+            
         rf12_buf[rxfill++] = in;
         rf12_crc = _crc16_update(rf12_crc, in);
 
-        if (rxfill >= rf12_len + 4 || rxfill >= RF_MAX)
+        if (rxfill >= rf12_len + 5 || rxfill >= RF_MAX)
             rf12_xfer(RF_IDLE_MODE);
     } else {
         uint8_t out;
 
         if (rxstate < 0) {
-            uint8_t pos = 2 + rf12_len + rxstate++;
+            uint8_t pos = 3 + rf12_len + rxstate++;
             out = rf12_buf[pos];
             rf12_crc = _crc16_update(rf12_crc, out);
         } else
             switch (rxstate++) {
                 case TXSYN1: out = 0x2D; break;
-                case TXSYN2: out = group; rxstate = - (2 + rf12_len); break;
+                case TXSYN2: out = rf12_grp; rxstate = - (2 + rf12_len); break;
                 case TXCRC1: out = rf12_crc; break;
                 case TXCRC2: out = rf12_crc >> 8; break;
                 case TXDONE: rf12_xfer(RF_IDLE_MODE); // fall through
@@ -160,17 +205,22 @@ static void rf12_interrupt() {
             
         rf12_xfer(RF_TXREG_WRITE + out);
     }
+// bitClear(PINB, 0);
 }
 
 static void rf12_recvStart () {
     rxfill = rf12_len = 0;
-    rf12_crc = crcInit;
+    rf12_crc = ~0;
+#if RF12_VERSION >= 2
+    if (group != 0)
+        rf12_crc = _crc16_update(~0, group);
+#endif
     rxstate = TXRECV;    
     rf12_xfer(RF_RECEIVER_ON);
 }
 
 uint8_t rf12_recvDone () {
-    if (rxstate == TXRECV && (rxfill >= rf12_len + 4 || rxfill >= RF_MAX)) {
+    if (rxstate == TXRECV && (rxfill >= rf12_len + 5 || rxfill >= RF_MAX)) {
         rxstate = TXIDLE;
         if (rf12_len > RF12_MAXDATA)
             rf12_crc = 1; // force bad crc if packet length is invalid
@@ -192,45 +242,59 @@ uint8_t rf12_canSend () {
     // no need to test with interrupts disabled: state TXRECV is only reached
     // outside of ISR and we don't care if rxfill jumps from 0 to 1 here
     if (rxstate == TXRECV && rxfill == 0 &&
-            (rf12_control(0x0000) & RF_RSSI_BIT) == 0) {
-        rf12_control(RF_IDLE_MODE); // stop receiver
+            (rf12_byte(0x00) & (RF_RSSI_BIT >> 8)) == 0) {
+        rf12_xfer(RF_IDLE_MODE); // stop receiver
         //XXX just in case, don't know whether these RF12 reads are needed!
-        rf12_xfer(0x0000); // status register
-        rf12_xfer(RF_RX_FIFO_READ); // fifo read
+        // rf12_xfer(0x0000); // status register
+        // rf12_xfer(RF_RX_FIFO_READ); // fifo read
         rxstate = TXIDLE;
+        rf12_grp = group;
         return 1;
     }
     return 0;
 }
 
-void rf12_sendStart (uint8_t hdr, const void* ptr, uint8_t len) {
+void rf12_sendStart (uint8_t hdr) {
     rf12_hdr = hdr & RF12_HDR_DST ? hdr :
                 (hdr & ~RF12_HDR_MASK) + (nodeid & NODE_ID);
-    rf12_len = len;
-    memcpy((void*) rf12_data, ptr, len);
     if (crypter != 0)
         crypter(1);
-        
-    rf12_crc = crcInit;
+    
+    rf12_crc = ~0;
+#if RF12_VERSION >= 2
+    rf12_crc = _crc16_update(rf12_crc, rf12_grp);
+#endif
     rxstate = TXPRE1;
     rf12_xfer(RF_XMITTER_ON); // bytes will be fed via interrupts
 }
 
+void rf12_sendStart (uint8_t hdr, const void* ptr, uint8_t len) {
+    rf12_len = len;
+    memcpy((void*) rf12_data, ptr, len);
+    rf12_sendStart(hdr);
+}
+
+// deprecated
 void rf12_sendStart (uint8_t hdr, const void* ptr, uint8_t len, uint8_t sync) {
     rf12_sendStart(hdr, ptr, len);
-    if (sync) {
-        // wait for packet to actually finish sending
-        // go into low power mode, as interrupts are going to come in very soon
-        while (rxstate != TXIDLE) {
+    rf12_sendWait(sync);
+}
+
+void rf12_sendWait (uint8_t mode) {
+    // wait for packet to actually finish sending
+    // go into low power mode, as interrupts are going to come in very soon
+    while (rxstate != TXIDLE)
+        if (mode) {
             // power down mode is only possible if the fuses are set to start
             // up in 258 clock cycles, i.e. approx 4 us - else must use standby!
             // modes 2 and higher may lose a few clock timer ticks
-            set_sleep_mode(sync == 1 ? SLEEP_MODE_IDLE :
-                            sync == 2 ? SLEEP_MODE_STANDBY
-                                       : SLEEP_MODE_PWR_DOWN);
+            set_sleep_mode(mode == 3 ? SLEEP_MODE_PWR_DOWN :
+#ifdef SLEEP_MODE_STANDBY
+                           mode == 2 ? SLEEP_MODE_STANDBY :
+#endif
+                                       SLEEP_MODE_IDLE);
             sleep_mode();
         }
-    }
 }
 
 /*!
@@ -260,20 +324,19 @@ void rf12_initialize (uint8_t id, uint8_t band, uint8_t g) {
     rf12_xfer(0xC606); // approx 49.2 Kbps, i.e. 10000/29/(1+6) Kbps
     rf12_xfer(0x94A2); // VDI,FAST,134kHz,0dBm,-91dBm 
     rf12_xfer(0xC2AC); // AL,!ml,DIG,DQD4 
-    rf12_xfer(0xCA83); // FIFO8,SYNC,!ff,DR 
-    rf12_xfer(0xCE00 | group); // SYNC=2DXX； 
+    if (group != 0) {
+        rf12_xfer(0xCA83); // FIFO8,2-SYNC,!ff,DR 
+        rf12_xfer(0xCE00 | group); // SYNC=2DXX； 
+    } else {
+        rf12_xfer(0xCA8B); // FIFO8,1-SYNC,!ff,DR 
+        rf12_xfer(0xCE2D); // SYNC=2D； 
+    }
     rf12_xfer(0xC483); // @PWR,NO RSTRIC,!st,!fi,OE,EN 
     rf12_xfer(0x9850); // !mp,90kHz,MAX OUT 
     rf12_xfer(0xCC77); // OB1，OB0, LPX,！ddy，DDIT，BW0 
     rf12_xfer(0xE000); // NOT USE 
     rf12_xfer(0xC800); // NOT USE 
     rf12_xfer(0xC049); // 1.66MHz,3.1V 
-
-#if RF12_VERSION == 1
-    crcInit = ~0;
-#else
-    crcInit = _crc16_update(~0, group);
-#endif
 
     rxstate = TXIDLE;
     if ((nodeid & NODE_ID) != 0)

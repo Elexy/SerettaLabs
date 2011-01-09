@@ -1,6 +1,6 @@
 // Configure some values in EEPROM for easy config of the RF12 later on.
 // 2009-05-06 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id: RF12demo.pde 5968 2010-08-27 22:32:58Z jcw $
+// $Id: RF12demo.pde 6394 2010-12-10 19:25:04Z jcw $
 
 // this version adds flash memory support, 2009-11-19
 
@@ -12,6 +12,7 @@
 #include <avr/pgmspace.h>
 
 #define DATAFLASH   1   // check for presence of DataFlash memory on JeeLink
+#define FLASH_4MBIT 1   // original JL2 had 8 Mbit flash, new ones have 4 Mbit
 
 #define LED_PIN     9   // activity LED
 
@@ -40,7 +41,7 @@ typedef struct {
 static RF12Config config;
 
 static char cmd;
-static byte value, stack[RF12_MAXDATA], top, sendLen, dest;
+static byte value, stack[RF12_MAXDATA], top, sendLen, dest, quiet;
 static byte testbuf[RF12_MAXDATA];
 
 static void addCh (char* msg, char c) {
@@ -149,6 +150,7 @@ static void kakuSend(char addr, byte device, byte on) {
 
 #define DF_ENABLE_PIN   8           // PB0
 
+#if FLASH_8MBIT
 // settings for 1 Mbyte flash in JLv2
 #define DF_PAGE_SIZE    256         // bytes
 #define DF_BLOCK_SIZE   16          // number of pages erased at same time
@@ -156,6 +158,17 @@ static void kakuSend(char addr, byte device, byte on) {
 #define DF_LOG_LIMIT    0x0F00      // last 64k is not used for logging
 #define DF_MEM_TOTAL    0x1000      // 4096 pages, i.e. 1 Mbyte
 #define DF_DEVICE_ID    0x1F45      // see AT26DF081A datasheet
+#endif
+
+#if FLASH_4MBIT
+// settings for 0.5 Mbyte flash in JLv2
+#define DF_PAGE_SIZE    256         // bytes
+#define DF_BLOCK_SIZE   16          // number of pages erased at same time
+#define DF_LOG_BEGIN    32          // first 2 blocks reserved for future use
+#define DF_LOG_LIMIT    0x0700      // last 64k is not used for logging
+#define DF_MEM_TOTAL    0x0800      // 2048 pages, i.e. 0.5 Mbyte
+#define DF_DEVICE_ID    0x1F44      // see AT25DF041A datasheet
+#endif
 
 // structure of each page in the log buffer, size must be exactly 256 bytes
 typedef struct {
@@ -499,12 +512,13 @@ char helpText1[] PROGMEM =
     "  <nn> i     - set node ID (standard node ids are 1..26)" "\n"
     "               (or enter an uppercase 'A'..'Z' to set id)" "\n"
     "  <n> b      - set MHz band (4 = 433, 8 = 868, 9 = 915)" "\n"
-    "  <nnn> g    - set network group (RFM12 only allows 212)" "\n"
+    "  <nnn> g    - set network group (RFM12 only allows 212, 0 = any)" "\n"
     "  <n> c      - set collect mode (advanced, normally 0)" "\n"
     "  t          - broadcast max-size test packet, with ack" "\n"
     "  ...,<nn> a - send data packet to node <nn>, with ack" "\n"
     "  ...,<nn> s - send data packet to node <nn>, no ack" "\n"
     "  <n> l      - turn activity LED on PB1 on or off" "\n"
+    "  <n> q      - set quiet mode (1 = don't report bad packets)" "\n"
     "Remote control commands:" "\n"
     "  <hchi>,<hclo>,<addr>,<cmd> f     - FS20 command (868 MHz)" "\n"
     "  <addr>,<dev>,<on> k              - KAKU command (433 MHz)" "\n"
@@ -625,6 +639,9 @@ static void handleInput (char c) {
                 if (df_present() && stack[0] == 12 && value == 34)
                     df_wipe();
                 break;
+            case 'q': // turn quiet mode on or off (don't report bad packets)
+                quiet = value;
+                break;
         }
         value = top = 0;
         memset(stack, 0, sizeof stack);
@@ -637,7 +654,7 @@ static void handleInput (char c) {
 
 void setup() {
     Serial.begin(57600);
-    Serial.print("\n[RF12demo.4]");
+    Serial.print("\n[RF12demo.6]");
 
     if (rf12_config()) {
         config.nodeId = eeprom_read_byte(RF12_EEPROM_ADDR);
@@ -659,13 +676,20 @@ void loop() {
 
     if (rf12_recvDone()) {
         byte n = rf12_len;
-        if (rf12_crc == 0)
-            Serial.print("OK ");
-        else {
-            Serial.print(" ? ");
+        if (rf12_crc == 0) {
+            Serial.print("OK");
+        } else {
+            if (quiet)
+                return;
+            Serial.print(" ?");
             if (n > 20) // print at most 20 bytes if crc is wrong
                 n = 20;
         }
+        if (config.group == 0) {
+            Serial.print("G ");
+            Serial.print((int) rf12_grp);
+        }
+        Serial.print(' ');
         Serial.print((int) rf12_hdr);
         for (byte i = 0; i < n; ++i) {
             Serial.print(' ');
@@ -679,13 +703,9 @@ void loop() {
             if (df_present())
                 df_append((const char*) rf12_data - 2, rf12_len + 2);
 
-            if ((rf12_hdr & RF12_HDR_ACK) && !(rf12_hdr & RF12_HDR_CTL) &&
-                    (config.nodeId & COLLECT) == 0) {
+            if (RF12_WANTS_ACK && (config.nodeId & COLLECT) == 0) {
                 Serial.println(" -> ack");
-                byte addr = rf12_hdr & RF12_HDR_MASK;
-                // if request was sent only to us, send ack back as broadcast
-                rf12_sendStart(rf12_hdr & RF12_HDR_DST ? RF12_HDR_CTL :
-                                    RF12_HDR_CTL | RF12_HDR_DST | addr, 0, 0);
+                rf12_sendStart(RF12_ACK_REPLY, 0, 0);
             }
             
             activityLed(0);
