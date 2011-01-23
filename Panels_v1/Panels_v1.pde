@@ -78,7 +78,7 @@ unsigned long receivedTime = 0; // to expire pump on message
 unsigned long waterTime = 0; // to delay the water sersor reading
 byte needToSend = false;
 boolean tempAsked = false;
-payload payloadData;
+panelData payloadData;
 
 volatile int NbTopsFan; //measuring the rising edges of the signal
 int Calc;                               
@@ -150,8 +150,8 @@ void loop() {
   
   authLed.digiWrite(needPump); // debug led to see if pump needed
   
-  payloadData.pump = PumpOn;
- // payloadData.tempOut = readout1wire();
+  payloadData.pump = pump;
+  payloadData.tempOut = readout1wire();
 
   if (sendTimerPanel.poll(1000)) {
     needToSend = true;

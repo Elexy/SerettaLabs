@@ -84,13 +84,12 @@ static void newReadings() {
  */
 void receive () {
   if (rf12_recvDone() && rf12_crc == 0 )
-    Serial.print("received packet: ");
     if((RF12_HDR_MASK & rf12_hdr) == 1) {
       setTemp* buf =  (setTemp*) rf12_data;
   
-      roomData.dTemp = buf->temp;
+      roomData.dTemp = (int) buf->temp;
       
-      
+      Serial.print("received packet: ");      
       Serial.println(roomData.dTemp);
     } 
 }
@@ -118,23 +117,23 @@ void loop() {
     if (sendTimerPanel.poll(5000)) {
         newReadings();        
         
-//        Serial.print("Living ");
-//        Serial.print((int) roomData.light);
-//        Serial.print(' ');
-//        Serial.print((int) roomData.moved);
-//        Serial.print(' ');
+        Serial.print("Living ");
+        Serial.print((int) roomData.light);
+        Serial.print(' ');
+        Serial.print((int) roomData.moved);
+        Serial.print(' ');
         Serial.print((int) roomData.humi);
         Serial.print(' ');
         Serial.print((int) roomData.temp);
         Serial.print(' ');
-        Serial.println((int) roomData.dTemp);
+        Serial.print((int) roomData.dTemp);
         
         if (roomData.temp >= roomData.dTemp + 1) heater = false;
         
         while (!rf12_canSend())
           rf12_recvDone();
         rf12_sendStart(0, &roomData, sizeof roomData);            
-        rf12_sendWait(2);
+//        rf12_sendWait(2);
         if (roomData.temp < roomData.dTemp - 1 || heater ) {
           heating.heat = 1;
           heating.fpwm = 100;
@@ -144,10 +143,10 @@ void loop() {
           rf12_sendStart(RF12_HDR_ACK | RF12_HDR_DST | 30, &heating, sizeof heating);
           rf12_sendWait(2);
           heater = true;
-          Serial.println(" heat: 1");
         } else {
-          Serial.println(" heat not needed");
           roomData.heat = 1;
         }
+        Serial.print(" ");
+        Serial.println(heating.heat ? '1' : '0');
     }
 }

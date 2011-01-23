@@ -21,10 +21,8 @@ typedef struct {
 } casitaData;
 
 typedef struct {
-    byte panelPump; // pump on or off
-    byte tankPump; // pump on or off
-    byte floorPump; // pump on or off
-    byte needHeat;
+    byte pump; // pump on or off
+    byte needPump;
     int tempIn; // temperature panel in
     int tempOut; // temperature panel out
     int tempAmb; // temperature outside
@@ -54,5 +52,5 @@ typedef struct {
 } panelPump;
 
 typedef struct {
-	int temp : 10; 
+	int temp :10; 
 } setTemp;
