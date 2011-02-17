@@ -48,7 +48,7 @@ static void askTemp1Wire()
 static int readTemp1wire () {
   ds18b20.reset();
   // ds18b20.select(oneID);
-  ds18b20.skip();
+//  ds18b20.skip();
   ds18b20.write(0xBE); // read scratchpad
   uint8_t data[9];
   for (uint8_t j = 0; j < 9; ++j)
@@ -72,6 +72,10 @@ unsigned long receivedTime = 0; // to expire pump on message
 byte needToSend = false;
 boolean tempAsked = false;
 casitaData payloadData;
+int panelOut; // holds the panel out temp
+int tankInStart, tankInTop; //store tankin when panel pump starts and the top tenp it hits
+boolean up, down = false; // cycle the solarpanel pump
+unsigned long cycleTimer; //timer for the panel pump cycle
 
 volatile int NbTopsFan; //measuring the rising edges of the signal
 int Calc;                               
@@ -90,24 +94,31 @@ void rpm ()     //This is the function that the interupt calls
  * Function receive data
  */
 void receive () {
-  if (rf12_recvDone() && rf12_crc == 0 && (RF12_HDR_MASK & rf12_hdr) == 30) {
-    heatingData* buf =  (heatingData*) rf12_data;
+  // data from the thermostat
+  if (rf12_recvDone() && rf12_crc == 0 && (RF12_HDR_MASK & rf12_hdr) == 16) {
+    roomBoard* buf =  (roomBoard*) rf12_data;
 
     payloadData.floorPump = buf->heat;
-    payloadData.fpPwm = buf->fpwm;
-    payloadData.solarPump = buf->solPump;
-    payloadData.spPwm = buf->spwm;
+//    payloadData.fpPwm = buf->fpwm;
+//    payloadData.solarPump = buf->solPump;
+//    payloadData.spPwm = buf->spwm;
     
     Serial.print("received packet: ");
     Serial.println(payloadData.floorPump ? "heat" : "no heat");
 //    Serial.println(payloadData.fpPwm);
-    Serial.println(payloadData.solarPump ? "solPump" : "no solPump");
+//    Serial.println(payloadData.solarPump ? "solPump" : "no solPump");
     receivedTime = millis();
   } else if (millis() > receivedTime + 30000) { //keep on for 30 seconds 
     // if no pump ON signal received for some time, turn off
     payloadData.floorPump = false;
     payloadData.solarPump = false;
   }
+  //data from the panels
+  if (rf12_recvDone() && rf12_crc == 0 && (RF12_HDR_MASK & rf12_hdr) == 1) {
+    panelData* buf =  (panelData*) rf12_data;
+
+    panelOut = buf->tempOut;
+  } 
 }
         
 void setup() {
@@ -128,6 +139,7 @@ void setup() {
   payloadData.spPwm = 100;
   
   heater.mode2(OUTPUT);
+  heater.digiWrite2(HIGH);  // turns on gas heater 
   
   FlowPump.mode3(INPUT);
   attachInterrupt(1, rpm, RISING);
@@ -141,18 +153,10 @@ void setup() {
 void loop() {
   receive();
   
-//  fpOn = needHeat; // todo will get more sophisticated
-
-  // pwm floor pump
-  //byte floorPumpOn = millis() % 10 >= payloadData.fpPwm;
-  floorPump.digiWrite(!payloadData.floorPump);
-//  floorPump.digiWrite(!fpOn);
-  heater.digiWrite2(payloadData.floorPump);  // turns on gas heater 
-  // TODO measure in and out temp to see if it ignited
-  // pwm solar pump
-  //byte solPumpOn = millis() % 10 >= payloadData.spPwm;
-  solarPump.digiWrite2(!payloadData.solarPump);
+//  byte on = millis() % 10 >= 2;    
+  floorPump.digiWrite(!payloadData.floorPump); // & on));
   
+  solarPump.digiWrite2(!(panelOut > 300));
   
   if (sendTimerPanel.poll(1500)) {
     needToSend = true;
@@ -178,25 +182,27 @@ void loop() {
     }
   }
   
+  if(payloadData.solarPump) {
+    if(!payloadData.needPump) {
+      tankInStart = payloadData.tankIn;
+      payloadData.needPump = true;
+      cycleTimer = millis();
+    }    
+    if(millis() > cycleTimer + 60000 && payloadData.tankIn >= tankInStart) 
+      if(payloadData.tankIn > tankInTop) {
+        tankInTop = payloadData.tankIn;
+      } else if(millis() > cycleTimer + 600000 && payloadData.tankIn < tankInTop) { // after 10 minutes check if the temp has gone down
+        payloadData.needPump = false;  
+        tankInStart = tankInTop = 0;
+      }        
+  }
+  
   if (needToSend) {
     needToSend = false;
-    if (rf12_canSend())
-    {
-      char* dataByte = NULL;
-      dataByte = (char*) &payloadData;
-   
-      Serial.print("\nData send: ");
-      for (int i; i < sizeof payloadData; i++)
-        Serial.print(dataByte[i], HEX);
-      Serial.print("\n");
-      
-      rf12_sendStart(0, &payloadData, sizeof payloadData);
-    }
-    else
-    {
-      Serial.println("Error can't send. canSend returned 'false'");
-    }
-    
+    while (!rf12_canSend())
+      rf12_recvDone();     
+    rf12_sendStart(0, &payloadData, sizeof payloadData);
+        
     Serial.print("floorpump:");
     Serial.println(payloadData.floorPump ? "ON" : "OFF");
     Serial.print("solarpump:");

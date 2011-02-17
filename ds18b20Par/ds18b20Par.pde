@@ -1,8 +1,12 @@
 #include <OneWire.h>
-#include <tempSensors.h>
+
 
 // DS18S20 Temperature chip i/o
-OneWire ds(6);  // on pin 10
+OneWire ds18b20(4);  // on pin 10
+typedef uint8_t DeviceAddress[8];
+DeviceAddress panelOutID = { 0x28, 0xC7, 0xE4, 0xE5, 0x02, 0x00, 0x00, 0x46 };
+
+
 int HighByte, LowByte, TReading, SignBit, Tc_100, Whole, Fract;
 
 void setup(void) {
@@ -16,21 +20,21 @@ void loop(void) {
   byte present = 0;
   byte data[12];  
 
-  ds.select(tankBottomID);
-  ds.write(0x44,1);         // start conversion, with parasite power on at the end
+  ds18b20.select(panelOutID);
+  ds18b20.write(0x44,1);         // start conversion, with parasite power on at the end
 
   delay(1000);     // maybe 750ms is enough, maybe not
-  // we might do a ds.depower() here, but the reset will take care of it.
+  // we might do a ds18b20.depower() here, but the reset will take care of it.
 
-  present = ds.reset();
-  ds.select(tankBottomID);    
-  ds.write(0xBE);         // Read Scratchpad
+  present = ds18b20.reset();
+  ds18b20.select(panelOutID);    
+  ds18b20.write(0xBE);         // Read Scratchpad
 
   Serial.print("P=");
   Serial.print(present,HEX);
   Serial.print(" ");
   for ( i = 0; i < 9; i++) {           // we need 9 bytes
-    data[i] = ds.read();
+    data[i] = ds18b20.read();
     Serial.print(data[i], HEX);
     Serial.print(" ");
   }
