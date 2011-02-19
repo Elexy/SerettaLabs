@@ -79,12 +79,19 @@ int showHeat()
 
 int count = 0;
 
+void lcdPrintDec( int value)
+{
+  lcd.print(value / 10);
+  lcd.print('.');
+  lcd.print(value % 10);
+}
+
 void secondLine()
 {
   // set the cursor to column 0, line 1
   lcd.setCursor(0, 1);
-  //  refresh every 3 sec
-  if (lcdTimer.poll(3000)) 
+  //  refresh every x seconds
+  if (lcdTimer.poll(4000)) 
   {  
     lcd.print("                "); //clear line
     lcd.setCursor(0, 1);
@@ -97,12 +104,29 @@ void secondLine()
         break;
       case 1 :
         lcd.print("TT:");
-        lcd.print(casita.tankTop);
-        lcd.write(3);
+        lcdPrintDec(casita.tankTop);
+//        lcd.write(3);
+        lcd.print(" TI:");
+        lcdPrintDec(casita.tankIn);
+//        lcd.write(3);
+        lcd.print(" ");
+        lcd.print(casita.solarPump ? 1 : 0);
         break;
       case 2 :
         lcd.print("PO:");
-        lcd.print(panels.tempOut);
+        lcdPrintDec(panels.tempOut);
+        lcd.write(3);        
+        lcd.print(" p");
+        lcd.print(panels.pump ? 1 : 0);
+        lcd.print(" np");
+        lcd.print(panels.needPump ? 1 : 0);
+        break;      
+      case 3 :        
+        lcd.print("XO:");
+        lcdPrintDec(casita.xchangeOut);
+        lcd.write(3);
+        lcd.print("AH:");
+        lcdPrintDec(casita.afterHeater);
         lcd.write(3);
         break;      
       default :
@@ -111,8 +135,7 @@ void secondLine()
         lcd.print(" flow:");
         lcd.print(casita.floorFlow);
     }
-    count++;
-    if(count > 2) count = 0;
+    count = (count + 1) % 4;
   }
 }
 
@@ -121,18 +144,27 @@ void secondLine()
  */
 void receive () {
   // data from the casita
-  if (rf12_recvDone() && rf12_crc == 0 && (RF12_HDR_MASK & rf12_hdr) == 30) {
-    casitaData* buf =  (casitaData*) rf12_data;
+  if (rf12_recvDone() && rf12_crc == 0) {
+    if((RF12_HDR_MASK & rf12_hdr) == 30) { // casitadata
+      casitaData* buf =  (casitaData*) rf12_data;
 
-    casita.floorPump = buf->floorPump;
-    casita.floorFlow = buf->floorFlow;
-    casita.tankTop = buf->tankTop;
-  }
-  //data from the panels
-  if (rf12_recvDone() && rf12_crc == 0 && (RF12_HDR_MASK & rf12_hdr) == 1) {
-    panelData* buf =  (panelData*) rf12_data;
+      casita.floorPump = buf->floorPump;
+      casita.floorFlow = buf->floorFlow;
+      casita.tankTop   = buf->tankTop;
+      casita.tankIn    = buf->tankIn;
+      casita.solarPump = buf->solarPump;
+      casita.xchangeOut= buf->xchangeOut;
+      casita.afterHeater= buf->afterHeater;
+      
+    } else if ((RF12_HDR_MASK & rf12_hdr) == 1) { //paneldata
+      panelData* buf =  (panelData*) rf12_data;
 
-    panels.tempOut = buf->tempOut;
+      panels.tempOut = buf->tempOut;
+      panels.tempIn  = buf->tempIn;
+      panels.tempAmb = buf->tempAmb;
+      panels.pump    = buf->pump;
+      panels.needPump= buf->needPump;
+    }
   } 
 }
 
@@ -170,13 +202,19 @@ void loop() {
   lcd.print('.');
   lcd.print(roomData.temp % 10);
   lcd.write(3);
-  lcd.print(" (");  
+  lcd.print(" TO:");
+  lcd.print(panels.tempAmb / 10);
+  lcd.print('.');
+  lcd.print(panels.tempAmb % 10);
+  lcd.write(3);
+  lcd.print(" ");
+/*  lcd.print(" (");  
   // desired temp
   lcd.print(roomData.dTemp / 10);
   lcd.print('.');
   lcd.print(roomData.dTemp % 10);
   lcd.write(3);
-  lcd.print(") ");  
+  lcd.print(") ");  */
   lcd.print((int) roomData.heat);
 
   secondLine();

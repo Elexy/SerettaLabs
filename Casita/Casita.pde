@@ -15,57 +15,8 @@ Port floorPump (3);  // the floor pump driver (fet) port 3 Dio
 Port solarPump (3);  // the solar pump driver (fet) port 3 Aio
 
 OneWire ds18b20 (7); // 1-wire temperature sensors, uses DIO port 4
-uint8_t oneID[8];
-
-static uint8_t initOneWire () {
-    if (ds18b20.search(oneID)) {
-        Serial.print(" 1-wire");
-        for (uint8_t i = 0; i < 8; ++i) {
-            Serial.print(' ');
-            Serial.print(oneID[i], HEX);
-        }
-        Serial.println();
-    }
-    ds18b20.reset();
-}
-
-static void askTemp1Wire()
-{
-    ds18b20.reset();
-    ds18b20.skip();
-    ds18b20.write(0x4E); // write to scratchpad
-    ds18b20.write(0);
-    ds18b20.write(0);
-    ds18b20.write(0x1F); // 9-bits is enough, measurement takes 94 msec
-    ds18b20.reset();
-    ds18b20.skip();
-    ds18b20.write(0x44, 1); // start conversion, parasite pull up on the end
-}
-
-/**
- * Call after 750ms afther askTemp1Wire
- */
-static int readTemp1wire () {
-  ds18b20.reset();
-  // ds18b20.select(oneID);
-//  ds18b20.skip();
-  ds18b20.write(0xBE); // read scratchpad
-  uint8_t data[9];
-  for (uint8_t j = 0; j < 9; ++j)
-      data[j] = ds18b20.read();
-  ds18b20.reset();
-  if (OneWire::crc8(data, 8) != data[8]) {
-      Serial.println(" crc? ");
-      return 0;
-  }
-//  else { 
-//    Serial.print("Data read: '"); 
-//    for (uint8_t j = 0; j < 9; ++j)
-//      Serial.print(data[j], HEX);
-//  }
-  
-  return ((data[1] << 8) + data[0]) * 10 >> 4; // degrees * 10
-}
+// now that we have the port include code for reading
+#include <tempSensors.h>
 
 MilliTimer sendTimerPanel; // to time sending msgs 
 unsigned long receivedTime = 0; // to expire pump on message
@@ -76,10 +27,17 @@ int panelOut; // holds the panel out temp
 int tankInStart, tankInTop; //store tankin when panel pump starts and the top tenp it hits
 boolean up, down = false; // cycle the solarpanel pump
 unsigned long cycleTimer; //timer for the panel pump cycle
-
 volatile int NbTopsFan; //measuring the rising edges of the signal
 int Calc;                               
-//int hallsensor = 2;    //The pin location of the sensor
+int sensorPointer;  // pointer to step though sensors
+
+// sensors we will read here
+SensorInfo sensors[4] = {
+    {tankTopID, "tankTop"}, 
+    {tankInID, "tankIn"},
+    {xchangeOutID, "xchangeOut" },
+    {afterHeaterID, "afterHeater" },
+};
 
 /**
  * Interupt controller for the flow meter
@@ -95,30 +53,30 @@ void rpm ()     //This is the function that the interupt calls
  */
 void receive () {
   // data from the thermostat
-  if (rf12_recvDone() && rf12_crc == 0 && (RF12_HDR_MASK & rf12_hdr) == 16) {
-    roomBoard* buf =  (roomBoard*) rf12_data;
+  if (rf12_recvDone() && rf12_crc == 0) {
+    if ((RF12_HDR_MASK & rf12_hdr) == 16) {
+      roomBoard* buf =  (roomBoard*) rf12_data;
 
-    payloadData.floorPump = buf->heat;
-//    payloadData.fpPwm = buf->fpwm;
-//    payloadData.solarPump = buf->solPump;
-//    payloadData.spPwm = buf->spwm;
+      payloadData.floorPump = buf->heat;
+  //    payloadData.fpPwm = buf->fpwm;
+  //    payloadData.solarPump = buf->solPump;
+  //    payloadData.spPwm = buf->spwm;
     
-    Serial.print("received packet: ");
-    Serial.println(payloadData.floorPump ? "heat" : "no heat");
-//    Serial.println(payloadData.fpPwm);
-//    Serial.println(payloadData.solarPump ? "solPump" : "no solPump");
-    receivedTime = millis();
-  } else if (millis() > receivedTime + 30000) { //keep on for 30 seconds 
-    // if no pump ON signal received for some time, turn off
-    payloadData.floorPump = false;
-    payloadData.solarPump = false;
-  }
-  //data from the panels
-  if (rf12_recvDone() && rf12_crc == 0 && (RF12_HDR_MASK & rf12_hdr) == 1) {
-    panelData* buf =  (panelData*) rf12_data;
+      Serial.print("received packet: ");
+      Serial.println(payloadData.floorPump ? "heat" : "no heat");
+  //    Serial.println(payloadData.fpPwm);
+  //    Serial.println(payloadData.solarPump ? "solPump" : "no solPump");
+      receivedTime = millis();
+    } else if (millis() > receivedTime + 30000) { //keep on for 30 seconds 
+      // if no pump ON signal received for some time, turn off
+      payloadData.floorPump = false;
+      payloadData.solarPump = false;
+    } else if ((RF12_HDR_MASK & rf12_hdr) == 1) { // from the panels
+      panelData* buf =  (panelData*) rf12_data;
 
-    panelOut = buf->tempOut;
-  } 
+      panelOut = buf->tempOut;
+    }
+  }
 }
         
 void setup() {
@@ -143,8 +101,8 @@ void setup() {
   
   FlowPump.mode3(INPUT);
   attachInterrupt(1, rpm, RISING);
-  
-  initOneWire();
+
+  sensorPointer = 0; //start with the first sensor
 }
 
 /**
@@ -156,7 +114,10 @@ void loop() {
 //  byte on = millis() % 10 >= 2;    
   floorPump.digiWrite(!payloadData.floorPump); // & on));
   
-  solarPump.digiWrite2(!(panelOut > 300));
+//  Serial.print("po");
+  payloadData.solarPump = (panelOut > payloadData.tankTop);
+  solarPump.digiWrite2(!(payloadData.solarPump));
+//  Serial.println(payloadData.solarPump ? '1' : '0');
   
   if (sendTimerPanel.poll(1500)) {
     needToSend = true;
@@ -168,7 +129,19 @@ void loop() {
       payloadData.floorFlow = (NbTopsFan / 7.5) * 10; //(Pulse frequency) / 7.5Q * 10 = e-1 C flow rate Liter / min 
       
       Serial.print("Read temp ");
-      payloadData.tankTop = readTemp1wire();
+      Serial.print(sensorPointer);
+      Serial.print(sensors[sensorPointer].desc);
+      Serial.println(readTemp1wire(sensors[sensorPointer].id));      
+      if(sensors[sensorPointer].desc == "tankTop") {
+        payloadData.tankTop = readTemp1wire(sensors[sensorPointer].id);
+      } else if(sensors[sensorPointer].desc == "tankIn") {
+        payloadData.tankIn = readTemp1wire(sensors[sensorPointer].id);
+      } else if(sensors[sensorPointer].desc == "xchangeOut") {
+        payloadData.xchangeOut = readTemp1wire(sensors[sensorPointer].id);
+      } else if(sensors[sensorPointer].desc == "afterHeater") {
+        payloadData.afterHeater = readTemp1wire(sensors[sensorPointer].id);
+      }      
+      sensorPointer = (sensorPointer + 1) % 4;
       tempAsked = false;
     }
     else
@@ -177,21 +150,31 @@ void loop() {
       NbTopsFan = 0;   //Set NbTops to 0 ready for calculations
       sei(); // Enable interupts
       Serial.print("Ask temp ");
-      askTemp1Wire();
+      askTemp1Wire(sensors[sensorPointer].id);
       tempAsked = true;
     }
   }
   
-  if(payloadData.solarPump) {
+  if(payloadData.solarPump && sendTimerPanel.poll(1000)) {
+    Serial.println("SP on ");
     if(!payloadData.needPump) {
+      Serial.println("start PP cycle ");
       tankInStart = payloadData.tankIn;
       payloadData.needPump = true;
       cycleTimer = millis();
     }    
     if(millis() > cycleTimer + 60000 && payloadData.tankIn >= tankInStart) 
+      Serial.println("PP on for 60 sec and tankin >= tankInStart");
+      Serial.print("TIS");
+      Serial.println(tankInStart);
+      Serial.print("TI");
+      Serial.println(payloadData.tankIn);
       if(payloadData.tankIn > tankInTop) {
+        Serial.print("new top");
+        Serial.println(tankInTop);
         tankInTop = payloadData.tankIn;
       } else if(millis() > cycleTimer + 600000 && payloadData.tankIn < tankInTop) { // after 10 minutes check if the temp has gone down
+        Serial.println("PP on for 10 min and tankin < tankInTop");
         payloadData.needPump = false;  
         tankInStart = tankInTop = 0;
       }        
@@ -203,7 +186,7 @@ void loop() {
       rf12_recvDone();     
     rf12_sendStart(0, &payloadData, sizeof payloadData);
         
-    Serial.print("floorpump:");
+/*    Serial.print("floorpump:");
     Serial.println(payloadData.floorPump ? "ON" : "OFF");
     Serial.print("solarpump:");
     Serial.println(payloadData.solarPump ? "ON" : "OFF");
@@ -211,6 +194,6 @@ void loop() {
     Serial.print(payloadData.tankTop);
     Serial.println("e-1 C");
     Serial.print(payloadData.floorFlow, DEC); //Prints the number calculated above
-    Serial.print(" e-1 C L/min\r\n"); //Prints "L/hour" and returns a  new line
+    Serial.print(" e-1 C L/min\r\n"); //Prints "L/hour" and returns a  new line */
   }
 }

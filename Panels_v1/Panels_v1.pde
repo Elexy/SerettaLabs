@@ -24,14 +24,13 @@ unsigned long waterTime = 0; // to delay the water sersor reading
 byte needToSend = false;
 boolean tempAsked = false;
 
-
 // sensors we will read here
-uint8_t * sensors[3] = 
-{
-  panelOutID,
-  tankInID,
-  panelAmbID
+SensorInfo sensors[3] = {
+    {panelOutID, "tempOut"}, 
+    {panelInID, "tempIn"},
+    {panelAmbID, "tempAmb" },
 };
+
 int sensorPointer;  // pointer to step though
 
 panelData payloadData;
@@ -48,7 +47,7 @@ void receive () {
     Serial.print("received packet: ");
     Serial.println(needPump ? "yes" : "no");
     receivedTime = millis();
-  } else if (millis() > receivedTime + 5000) {
+  } else if (millis() > receivedTime + 10000) {
     // if no pump ON signal received for some time, turn off
     needPump = false;
   }
@@ -74,6 +73,7 @@ void setup() {
 void loop() {
   DeviceAddress sensor;
   receive();
+  needPump = 1;
   waterDetected = WaterSensor.anaRead() > 1000;
   
   if (waterDetected) { // There is water
@@ -87,38 +87,39 @@ void loop() {
     waterTime = 0;
   }
   
-  authLed.digiWrite(needPump); // debug led to see if pump needed
+//  authLed.digiWrite(needPump); // debug led to see if pump needed
   
   Pump.digiWrite2(!PumpOn); //inverted
   
   payloadData.pump = PumpOn;
 
   if (sendTimerPanel.poll(2000)) {
-    Serial.print("R=");
+    Serial.println("R=");
     for( byte i = 0; i < 8; i++) {
-      Serial.print(sensors[sensorPointer][i], HEX);
+      Serial.print(sensors[sensorPointer].id[i], HEX);
       Serial.print(" ");
     }
 
     needToSend = true;    
     Serial.print("Ask temp ");
-    askTemp1Wire(sensors[sensorPointer]);
-//    tempAsked = true;
+    askTemp1Wire(sensors[sensorPointer].id);
+    tempAsked = true;
     delay(1000);
     Serial.print("Read temp ");      
-    switch (sensorPointer)
+    if(tempAsked && tempTimerPanel.poll(tempWaitTime)) 
     {
-      case 0:
-        payloadData.tempOut = readTemp1wire(sensors[sensorPointer]);
-        break;
-      case 1:
-        payloadData.tempIn = 600; //readTemp1wire(sensors[sensorPointer]);
-        break;
-      case 2:
-        payloadData.tempAmb = readTemp1wire(sensors[sensorPointer]);
-        break;        
+      Serial.println(readTemp1wire(sensors[sensorPointer].id));      
+      if(sensors[sensorPointer].desc == "tempOut") {
+        payloadData.tempOut = readTemp1wire(sensors[sensorPointer].id);
+      } else if(sensors[sensorPointer].desc == "TempIn") {
+        payloadData.tempIn = readTemp1wire(sensors[sensorPointer].id);
+      } else if(sensors[sensorPointer].desc == "tempAmb") {
+        payloadData.tempAmb = readTemp1wire(sensors[sensorPointer].id);
+      }      
+      //  payloadData.mem = readTemp1wire(sensors[sensorPointer].id)
+      sensorPointer = (sensorPointer + 1) % 3;    
+      tempAsked = false;
     }
-    sensorPointer = (sensorPointer + 1) % sizeof sensors;    
   }
     
   if (needToSend) {
@@ -150,3 +151,4 @@ void loop() {
     Serial.print(" e-1 C");
   }
 }
+
