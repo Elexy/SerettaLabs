@@ -20,6 +20,7 @@ typedef struct {
 typedef struct {
     boolean pump; // pump on or off
     boolean needPump; //we need the pump
+	boolean water; // is there water detected
     int tempIn; // temperature panel in
     int tempOut; // temperature panel out
     int tempAmb; // temperature outside

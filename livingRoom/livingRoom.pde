@@ -97,35 +97,38 @@ void secondLine()
     lcd.setCursor(0, 1);
     switch (count) {
       case 0 :
-        lcd.print("pump:");
+        lcd.print("fp:");
         lcd.print((int) casita.floorPump);
-        lcd.print(" flow:");
+        lcd.print(" fl:");
         lcd.print((int) casita.floorFlow);
         break;
       case 1 :
-        lcd.print("TT:");
+        lcd.print("tt");
         lcdPrintDec(casita.tankTop);
 //        lcd.write(3);
-        lcd.print(" TI:");
+        lcd.print("ti");
         lcdPrintDec(casita.tankIn);
 //        lcd.write(3);
-        lcd.print(" ");
-        lcd.print(casita.solarPump ? 1 : 0);
+        lcd.print("sp");
+        lcd.print(casita.solarPump ? 1 : 0);        
         break;
       case 2 :
-        lcd.print("PO:");
+        lcd.print("pi");
+        lcdPrintDec(panels.tempIn);
+        lcd.print("po");
         lcdPrintDec(panels.tempOut);
         lcd.write(3);        
-        lcd.print(" p");
-        lcd.print(panels.pump ? 1 : 0);
-        lcd.print(" np");
+        lcd.print("w:");
+        lcd.print(panels.water ? 1 : 0);
+        lcd.print("p");
         lcd.print(panels.needPump ? 1 : 0);
+        lcd.print(panels.pump ? 1 : 0);        
         break;      
       case 3 :        
-        lcd.print("XO:");
+        lcd.print("xo:");
         lcdPrintDec(casita.xchangeOut);
         lcd.write(3);
-        lcd.print("AH:");
+        lcd.print("ah:");
         lcdPrintDec(casita.afterHeater);
         lcd.write(3);
         break;      
@@ -153,6 +156,7 @@ void receive () {
       casita.tankTop   = buf->tankTop;
       casita.tankIn    = buf->tankIn;
       casita.solarPump = buf->solarPump;
+      casita.needPump  = buf->needPump;
       casita.xchangeOut= buf->xchangeOut;
       casita.afterHeater= buf->afterHeater;
       
@@ -163,9 +167,14 @@ void receive () {
       panels.tempIn  = buf->tempIn;
       panels.tempAmb = buf->tempAmb;
       panels.pump    = buf->pump;
+      panels.water   = buf->water;
       panels.needPump= buf->needPump;
     }
-  } 
+  } else {
+    roomBoard roomData;
+    casitaData casita;
+    panelData panels;
+  }
 }
 
 void setup() {
@@ -192,30 +201,26 @@ void setup() {
 }
 
 boolean heater = false;
+byte heatPauseTimer;
+byte heaterTimer;
+boolean pauseHeat;
 
 void loop() {
   receive();    
   // set the cursor to column 0, line 1
   lcd.setCursor(0, 0);
   // print the current temp
-  lcd.print(roomData.temp / 10);
-  lcd.print('.');
-  lcd.print(roomData.temp % 10);
+  lcdPrintDec(roomData.temp);
   lcd.write(3);
-  lcd.print(" TO:");
-  lcd.print(panels.tempAmb / 10);
-  lcd.print('.');
-  lcd.print(panels.tempAmb % 10);
+  lcd.print("out:");
+  lcdPrintDec(panels.tempAmb);
   lcd.write(3);
-  lcd.print(" ");
-/*  lcd.print(" (");  
-  // desired temp
-  lcd.print(roomData.dTemp / 10);
-  lcd.print('.');
-  lcd.print(roomData.dTemp % 10);
-  lcd.write(3);
-  lcd.print(") ");  */
-  lcd.print((int) roomData.heat);
+  lcd.print("");
+  if(pauseHeat) {
+    lcd.print("p");
+  } else {
+    lcd.print((int) roomData.heat);
+  }
 
   secondLine();
 
@@ -235,13 +240,25 @@ void loop() {
 
     if (roomData.temp >= roomData.dTemp + 1) heater = false;
 
-    if (roomData.temp < roomData.dTemp - 1 || heater ) {
-      roomData.heat = 1;          
+    // if there is no significant temp rise, stop pump for a while
+    if(heaterTimer > millis() + 15000 && !(casita.afterHeater > casita.xchangeOut)) {
+      if(!pauseHeat) {
+        heatPauseTimer = millis();
+        pauseHeat = true;
+      } else {
+        if(heatPauseTimer + 60000 >= millis()) pauseHeat = false;
+      }
+    }
+    
+    if (!pauseHeat && (roomData.temp < roomData.dTemp - 1 || heater )) {
+      roomData.heat = 1; 
+      heaterTimer = millis();      
       heater = true;
     } 
     else {
       roomData.heat = 0;
     }
+    
     while (!rf12_canSend())
       rf12_recvDone();
     rf12_sendStart(0, &roomData, sizeof roomData);            

@@ -24,8 +24,6 @@ byte needToSend = false;
 boolean tempAsked = false;
 casitaData payloadData;
 int panelOut; // holds the panel out temp
-int tankInStart, tankInTop; //store tankin when panel pump starts and the top tenp it hits
-boolean up, down = false; // cycle the solarpanel pump
 unsigned long cycleTimer; //timer for the panel pump cycle
 volatile int NbTopsFan; //measuring the rising edges of the signal
 int Calc;                               
@@ -71,6 +69,7 @@ void receive () {
       // if no pump ON signal received for some time, turn off
       payloadData.floorPump = false;
       payloadData.solarPump = false;
+      panelOut = false;
     } else if ((RF12_HDR_MASK & rf12_hdr) == 1) { // from the panels
       panelData* buf =  (panelData*) rf12_data;
 
@@ -155,29 +154,19 @@ void loop() {
     }
   }
   
-  if(payloadData.solarPump && sendTimerPanel.poll(1000)) {
-    Serial.println("SP on ");
-    if(!payloadData.needPump) {
-      Serial.println("start PP cycle ");
-      tankInStart = payloadData.tankIn;
+  if(payloadData.solarPump) {
+    if(millis() + 120000 > cycleTimer// start + 2 minutes
+       &&
+       panelOut <= payloadData.tankIn + 100) {
+      // if panel out temp is less then 10c higher, the lop must be full
+      // optimize insulation to get to max 5 degrees
+      payloadData.needPump = false;
+    } else {
       payloadData.needPump = true;
-      cycleTimer = millis();
-    }    
-    if(millis() > cycleTimer + 60000 && payloadData.tankIn >= tankInStart) 
-      Serial.println("PP on for 60 sec and tankin >= tankInStart");
-      Serial.print("TIS");
-      Serial.println(tankInStart);
-      Serial.print("TI");
-      Serial.println(payloadData.tankIn);
-      if(payloadData.tankIn > tankInTop) {
-        Serial.print("new top");
-        Serial.println(tankInTop);
-        tankInTop = payloadData.tankIn;
-      } else if(millis() > cycleTimer + 600000 && payloadData.tankIn < tankInTop) { // after 10 minutes check if the temp has gone down
-        Serial.println("PP on for 10 min and tankin < tankInTop");
-        payloadData.needPump = false;  
-        tankInStart = tankInTop = 0;
-      }        
+      if(!cycleTimer == 0) cycleTimer = millis();      
+    }
+  } else {
+    cycleTimer = 0;
   }
   
   if (needToSend) {

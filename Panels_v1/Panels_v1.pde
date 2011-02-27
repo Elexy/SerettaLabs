@@ -39,17 +39,17 @@ panelData payloadData;
  */
 void receive () {
   if (rf12_recvDone() && rf12_crc == 0 
-    && (RF12_HDR_MASK & rf12_hdr) == 1) {
+    && (RF12_HDR_MASK & rf12_hdr) == 30) {
     casitaData* buf =  (casitaData*) rf12_data;
 
-    needPump = buf->needPump;
+    payloadData.needPump = buf->needPump;
     
     Serial.print("received packet: ");
-    Serial.println(needPump ? "yes" : "no");
+    Serial.println(payloadData.needPump ? "yes" : "no");
     receivedTime = millis();
   } else if (millis() > receivedTime + 10000) {
     // if no pump ON signal received for some time, turn off
-    needPump = false;
+    payloadData.needPump = false;
   }
 }
         
@@ -71,28 +71,21 @@ void setup() {
  * The main loop
  */
 void loop() {
-  DeviceAddress sensor;
   receive();
-  needPump = 1;
-  waterDetected = WaterSensor.anaRead() > 1000;
+  payloadData.water = WaterSensor.anaRead() > 1000;
   
-  if (waterDetected) { // There is water
-    if (!PumpOn && !waterTime) {
+  if (payloadData.water) { // There is water
+    if (!payloadData.pump && !waterTime) {
       waterTime = millis();
-    }
-    
-    PumpOn = needPump && millis() > waterTime + 5000;
+    } 
+    payloadData.pump = payloadData.needPump && millis() > waterTime + 5000;
   } else {
-    PumpOn = false;
+    payloadData.pump = false;
     waterTime = 0;
   }
   
-//  authLed.digiWrite(needPump); // debug led to see if pump needed
+  Pump.digiWrite2(!payloadData.pump); //inverted
   
-  Pump.digiWrite2(!PumpOn); //inverted
-  
-  payloadData.pump = PumpOn;
-
   if (sendTimerPanel.poll(2000)) {
     Serial.println("R=");
     for( byte i = 0; i < 8; i++) {
@@ -108,10 +101,11 @@ void loop() {
     Serial.print("Read temp ");      
     if(tempAsked && tempTimerPanel.poll(tempWaitTime)) 
     {
-      Serial.println(readTemp1wire(sensors[sensorPointer].id));      
+      //Serial.println(readTemp1wire(sensors[sensorPointer].id));      
       if(sensors[sensorPointer].desc == "tempOut") {
         payloadData.tempOut = readTemp1wire(sensors[sensorPointer].id);
-      } else if(sensors[sensorPointer].desc == "TempIn") {
+        //payloadData.tempOut = 1100; //test setup
+      } else if(sensors[sensorPointer].desc == "tempIn") {
         payloadData.tempIn = readTemp1wire(sensors[sensorPointer].id);
       } else if(sensors[sensorPointer].desc == "tempAmb") {
         payloadData.tempAmb = readTemp1wire(sensors[sensorPointer].id);
@@ -137,18 +131,18 @@ void loop() {
     rf12_sendWait(2);
     
     Serial.print("need pump:");
-    Serial.println(needPump ? "yes" : "no");
+    Serial.println(payloadData.needPump ? "yes" : "no");
     Serial.print("pump:");
-    Serial.println(PumpOn ? "ON" : "OFF");
+    Serial.println(payloadData.pump ? "ON" : "OFF");
     Serial.print("water:");
     Serial.println(WaterSensor.anaRead());
     Serial.print("Temperatuur uit: ");
     Serial.print(payloadData.tempOut);
     Serial.println("e-1 C");
     Serial.print(payloadData.tempIn); 
-    Serial.print(" e-1 C");
+    Serial.println(" e-1 C");
     Serial.print(payloadData.tempAmb); 
-    Serial.print(" e-1 C");
+    Serial.println(" e-1 C");
   }
 }
 
