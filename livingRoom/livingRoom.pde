@@ -170,11 +170,12 @@ void receive () {
       panels.water   = buf->water;
       panels.needPump= buf->needPump;
     }
-  } else {
+  } 
+  /*else {
     roomBoard roomData;
     casitaData casita;
     panelData panels;
-  }
+  }*/
 }
 
 void setup() {
@@ -197,16 +198,57 @@ void setup() {
   pir_ldr.mode2(INPUT);
   pir_ldr.digiWrite2(1);  // pull-up AIO
 
-  roomData.dTemp = 195;
+  roomData.dTemp = 197;
 }
 
 boolean heater = false;
-byte heatPauseTimer;
-byte heaterTimer;
-boolean pauseHeat;
+MilliTimer heatPauseTimer;
+MilliTimer heaterTimer;
+boolean pauseHeat = false;
 
 void loop() {
-  receive();    
+  receive();
+
+  if ( !(roomData.temp > roomData.dTemp + 1) 
+      &&
+      roomData.temp <= roomData.dTemp - 1 ) {      
+    roomData.heat = 1 & !pauseHeat;
+    if(!heater) {
+      heaterTimer.set(30000);
+      Serial.println("set heaterTimer");
+    }
+    heater = true;
+//    if(reportTimer.poll(1000)) Serial.println(heaterTimer);
+  } else {
+    roomData.heat = 0; 
+    heater = false;
+  }
+  if(reportTimer.poll(1000) && heaterTimer.remaining()) 
+    Serial.println(heaterTimer.remaining());
+  // if there is no significant temp rise, stop pump for a while
+  if(heaterTimer.poll() || pauseHeat) {
+    if(reportTimer.poll(1000)) Serial.println("15sec after heaterTimer set");
+    if (casita.afterHeater < (casita.xchangeOut + 100)) {
+      if(reportTimer.poll(1000)) Serial.println("no heat rise after 15sec");
+      if(!pauseHeat) {
+        heatPauseTimer.set(60000);
+        pauseHeat = true;
+        Serial.print("set heatPauseTmer: ");
+      } else {
+        if(reportTimer.poll(1000)) Serial.println(heatPauseTimer.remaining());
+        if(pauseHeat && heatPauseTimer.poll()) {
+          pauseHeat = false;
+          heaterTimer.set(30000);
+          Serial.println("stop heat pause 20sec");
+        }
+      }
+    } else {
+      Serial.println("heater works");      
+      heaterTimer.set(30000);
+      pauseHeat = false;
+    }
+  }
+
   // set the cursor to column 0, line 1
   lcd.setCursor(0, 0);
   // print the current temp
@@ -237,27 +279,6 @@ void loop() {
     Serial.print((int) roomData.temp);
     Serial.print(' ');
     Serial.print(showHeat());
-
-    if (roomData.temp >= roomData.dTemp + 1) heater = false;
-
-    // if there is no significant temp rise, stop pump for a while
-    if(heaterTimer > millis() + 15000 && !(casita.afterHeater > casita.xchangeOut)) {
-      if(!pauseHeat) {
-        heatPauseTimer = millis();
-        pauseHeat = true;
-      } else {
-        if(heatPauseTimer + 60000 >= millis()) pauseHeat = false;
-      }
-    }
-    
-    if (!pauseHeat && (roomData.temp < roomData.dTemp - 1 || heater )) {
-      roomData.heat = 1; 
-      heaterTimer = millis();      
-      heater = true;
-    } 
-    else {
-      roomData.heat = 0;
-    }
     
     while (!rf12_canSend())
       rf12_recvDone();
