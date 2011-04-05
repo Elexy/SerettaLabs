@@ -1,6 +1,6 @@
 // New version of the Room Node, derived from rooms.pde
 // 2010-10-19 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id: roomNode.pde 6348 2010-12-05 16:15:16Z jcw $
+// $Id: roomNode.pde 7201 2011-02-26 16:10:57Z jcw $
 
 // see http://jeelabs.org/2010/10/20/new-roomnode-code/
 // and http://jeelabs.org/2010/10/21/reporting-motion/
@@ -43,7 +43,7 @@ Scheduler scheduler (schedbuf, TASK_END);
 // Other variables used in various places in the code:
 
 static byte reportCount;    // count up until next report, i.e. packet send
-static byte myNodeID = 2;   // node ID used for this unit
+static byte myNodeID;       // node ID used for this unit
 
 // This defines the structure of the packets which get sent out by wireless:
 
@@ -68,6 +68,7 @@ struct {
 #if PIR_PORT
     #define PIR_HOLD_TIME   30  // hold PIR value this many seconds after change
     #define PIR_PULLUP      1   // set to one to pull-up the PIR input pin
+    #define PIR_FLIP        1   // 0 or 1, to match PIR reporting high or low
     
     class PIR : public Port {
         volatile byte value, changed;
@@ -78,7 +79,8 @@ struct {
 
         // this code is called from the pin-change interrupt handler
         void poll() {
-            byte pin = digiRead();
+            // see http://talk.jeelabs.net/topic/811#post-4734 for PIR_FLIP
+            byte pin = digiRead() ^ PIR_FLIP;
             // if the pin just went on, then set the changed flag to report it
             if (pin) {
                 if (!state())
@@ -133,7 +135,8 @@ static byte waitForAck() {
     MilliTimer ackTimer;
     while (!ackTimer.poll(ACK_TIME)) {
         if (rf12_recvDone() && rf12_crc == 0 &&
-                rf12_hdr == (RF12_HDR_DST | RF12_HDR_ACK | myNodeID))
+                // see http://talk.jeelabs.net/topic/811#post-4712
+                rf12_hdr == (RF12_HDR_DST | RF12_HDR_CTL | myNodeID))
             return 1;
         set_sleep_mode(SLEEP_MODE_IDLE);
         sleep_mode();
@@ -238,7 +241,7 @@ void setup () {
         Serial.print("\n[roomNode.3]");
         myNodeID = rf12_config();
     #else
-        rf12_initialize(myNodeID, RF12_868MHZ, 5);
+        myNodeID = rf12_config(0); // don't report info on the serial port
     #endif
     
     rf12_sleep(0); // power down

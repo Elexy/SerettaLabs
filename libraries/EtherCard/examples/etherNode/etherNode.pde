@@ -47,7 +47,7 @@ static char outCount = -1;
 #define MESSAGE_TRUNC 15    // Truncate message payload to reduce memory use
 
 static byte buf[1000];      // tcp/ip send and receive buffer
-static BufferFiller bfill;  // uased as cursor while filling the buffer
+static BufferFiller bfill;  // used as cursor while filling the buffer
 
 static byte history_rcvd[NUM_MESSAGES][MESSAGE_TRUNC+1]; //history record
 static byte history_len[NUM_MESSAGES]; // # of RF12 messages+header in history
@@ -179,7 +179,7 @@ static void sendPage(const char* data, BufferFiller& buf) {
     byte d = getIntArg(data, "d");
     if (data[6] == '?' && p != 0 && 0 <= d && d <= 31) {
         // prepare to send data as soon as possible in loop()
-        outDest = d;
+        outDest = d & RF12_HDR_MASK ? RF12_HDR_DST | d : 0;
         outCount = 0;
         // convert the input string to a number of decimal data bytes in outBuf
         ++p;
@@ -257,12 +257,9 @@ void loop(){
         next_msg = (next_msg + 1) % NUM_MESSAGES;
         msgs_rcvd = (msgs_rcvd + 1) % 10000;
 
-        if ((rf12_hdr & ~RF12_HDR_MASK) == RF12_HDR_ACK && !config.collect) {
+        if (RF12_WANTS_ACK && !config.collect) {
             Serial.println(" -> ack");
-            byte addr = rf12_hdr & RF12_HDR_MASK;
-            // if request was sent only to us, send ack back as broadcast
-            rf12_sendStart(rf12_hdr & RF12_HDR_DST ? RF12_HDR_CTL :
-                                RF12_HDR_CTL | RF12_HDR_DST | addr, 0, 0);
+            rf12_sendStart(RF12_ACK_REPLY, 0, 0);
         }
     }
     

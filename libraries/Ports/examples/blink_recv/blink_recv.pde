@@ -1,6 +1,6 @@
 // Ports library demo, this is the receiver, see also the blink_xmit example
 // 2009-02-14 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id: blink_recv.pde 5962 2010-08-24 07:43:13Z jcw $
+// $Id: blink_recv.pde 6395 2010-12-10 19:27:21Z jcw $
 
 #include <Ports.h>
 #include "RF12.h"
@@ -50,9 +50,7 @@ void loop() {
 
         state.flags = 0;
         
-        if ((rf12_hdr & ~RF12_HDR_MASK) == RF12_HDR_ACK) {
-            uint8_t h = RF12_HDR_CTL | RF12_HDR_DST | rf12_hdr & RF12_HDR_MASK;
-            rf12_sendStart(h, &state, sizeof state);
-        }
+        if (RF12_WANTS_ACK)
+            rf12_sendStart(RF12_ACK_REPLY, 0, 0);
     }
 }

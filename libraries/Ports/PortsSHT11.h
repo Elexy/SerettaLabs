@@ -1,6 +1,6 @@
 // Port library interface to SHT11 sensors connected via "something like I2C"
 // 2009-02-16 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id: PortsSHT11.h 4745 2009-12-18 00:56:36Z jcw $
+// $Id: PortsSHT11.h 6540 2010-12-24 14:41:03Z jcw $
 
 class SHT11 : public Port {
     void clock(uint8_t x) const;
@@ -27,10 +27,14 @@ public:
     
     uint8_t readStatus() const;
     void writeStatus(uint8_t value) const;
-    
+
     uint8_t measure(uint8_t type, void (*delayFun)() =0);
 
+#ifndef __AVR_ATtiny84__    
     void calculate(float& rh_true, float& t_C) const;
 
     static float dewpoint(float h, float t);
+#else
+    //XXX TINY!
+#endif
 };

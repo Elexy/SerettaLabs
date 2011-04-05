@@ -1,6 +1,6 @@
 // Configure some values in EEPROM for easy config of the RF12 later on.
 // 2009-05-06 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id: RF12demo.pde 6394 2010-12-10 19:25:04Z jcw $
+// $Id: RF12demo.pde 7450 2011-04-02 01:12:55Z jcw $
 
 // this version adds flash memory support, 2009-11-19
 
@@ -12,7 +12,7 @@
 #include <avr/pgmspace.h>
 
 #define DATAFLASH   1   // check for presence of DataFlash memory on JeeLink
-#define FLASH_4MBIT 1   // original JL2 had 8 Mbit flash, new ones have 4 Mbit
+#define FLASH_MBIT  8   // support for various dataflash sizes: 4/8/16 Mbit
 
 #define LED_PIN     9   // activity LED
 
@@ -150,9 +150,17 @@ static void kakuSend(char addr, byte device, byte on) {
 
 #define DF_ENABLE_PIN   8           // PB0
 
-#if FLASH_8MBIT
+#if FLASH_MBIT == 4
+// settings for 0.5 Mbyte flash in JLv2
+#define DF_BLOCK_SIZE   16          // number of pages erased at same time
+#define DF_LOG_BEGIN    32          // first 2 blocks reserved for future use
+#define DF_LOG_LIMIT    0x0700      // last 64k is not used for logging
+#define DF_MEM_TOTAL    0x0800      // 2048 pages, i.e. 0.5 Mbyte
+#define DF_DEVICE_ID    0x1F44      // see AT25DF041A datasheet
+#endif
+
+#if FLASH_MBIT == 8
 // settings for 1 Mbyte flash in JLv2
-#define DF_PAGE_SIZE    256         // bytes
 #define DF_BLOCK_SIZE   16          // number of pages erased at same time
 #define DF_LOG_BEGIN    32          // first 2 blocks reserved for future use
 #define DF_LOG_LIMIT    0x0F00      // last 64k is not used for logging
@@ -160,14 +168,13 @@ static void kakuSend(char addr, byte device, byte on) {
 #define DF_DEVICE_ID    0x1F45      // see AT26DF081A datasheet
 #endif
 
-#if FLASH_4MBIT
-// settings for 0.5 Mbyte flash in JLv2
-#define DF_PAGE_SIZE    256         // bytes
-#define DF_BLOCK_SIZE   16          // number of pages erased at same time
-#define DF_LOG_BEGIN    32          // first 2 blocks reserved for future use
-#define DF_LOG_LIMIT    0x0700      // last 64k is not used for logging
-#define DF_MEM_TOTAL    0x0800      // 2048 pages, i.e. 0.5 Mbyte
-#define DF_DEVICE_ID    0x1F44      // see AT25DF041A datasheet
+#if FLASH_MBIT == 16
+// settings for 2 Mbyte flash in JLv2
+#define DF_BLOCK_SIZE   256         // number of pages erased at same time
+#define DF_LOG_BEGIN    512         // first 2 blocks reserved for future use
+#define DF_LOG_LIMIT    0x1F00      // last 64k is not used for logging
+#define DF_MEM_TOTAL    0x2000      // 8192 pages, i.e. 2 Mbyte
+#define DF_DEVICE_ID    0x2020      // see M25P16 datasheet
 #endif
 
 // structure of each page in the log buffer, size must be exactly 256 bytes
@@ -255,7 +262,7 @@ void df_write (word block, const void* buf) {
     df_xfer(block >> 8);
     df_xfer(block);
     df_xfer(0);
-    for (word i = 0; i < DF_PAGE_SIZE; ++i)
+    for (word i = 0; i < 256; ++i)
         df_xfer(((const byte*) buf)[(byte) i]);
     df_deselect();
 }
@@ -277,7 +284,7 @@ static void df_erase (word block) {
     Serial.print("DF E ");
     Serial.println(block);
     
-    df_writeCmd(0x20);      // Block Erase (4 Kbytes)
+    df_writeCmd(0x20);      // Block Erase
     df_xfer(block >> 8);
     df_xfer(block);
     df_xfer(0);
@@ -654,7 +661,7 @@ static void handleInput (char c) {
 
 void setup() {
     Serial.begin(57600);
-    Serial.print("\n[RF12demo.6]");
+    Serial.print("\n[RF12demo.7]");
 
     if (rf12_config()) {
         config.nodeId = eeprom_read_byte(RF12_EEPROM_ADDR);

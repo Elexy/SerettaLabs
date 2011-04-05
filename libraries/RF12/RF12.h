@@ -1,6 +1,6 @@
 // RFM12B driver definitions
 // 2009-02-09 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id: RF12.h 6394 2010-12-10 19:25:04Z jcw $
+// $Id: RF12.h 7199 2011-02-25 15:13:37Z jcw $
 
 #ifndef RF12_h
 #define RF12_h
@@ -48,7 +48,7 @@ void rf12_initialize(uint8_t id, uint8_t band, uint8_t group=0xD4);
 // initialize the RF12 module from settings stored in EEPROM by "RF12demo"
 // don't call rf12_initialize() if you init the hardware with rf12_config()
 // returns the node ID as 1..31 value (1..26 correspond to nodes 'A'..'Z')
-uint8_t rf12_config(void);
+uint8_t rf12_config(uint8_t show =1);
 
 // call this frequently, returns true if a packet has been received
 uint8_t rf12_recvDone(void);

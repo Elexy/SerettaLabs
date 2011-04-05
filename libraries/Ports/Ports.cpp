@@ -1,9 +1,10 @@
 // Ports library definitions
 // 2009-02-13 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id: Ports.cpp 5984 2010-09-02 00:48:55Z jcw $
+// $Id: Ports.cpp 7377 2011-03-21 15:08:27Z jcw $
 
 #include "Ports.h"
 #include <avr/sleep.h>
+#include <util/atomic.h>
 
 // flag bits sent to the receiver
 #define MODE_CHANGE 0x80    // a pin mode was changed
@@ -31,7 +32,7 @@ uint16_t Port::shiftRead(uint8_t bitOrder, uint8_t count) const {
 void Port::shiftWrite(uint8_t bitOrder, uint16_t value, uint8_t count) const {
     uint16_t mask = bit(LSBFIRST ? 0 : count - 1);
     for (uint8_t i = 0; i < count; ++i) {
-        digiWrite(value & mask);
+        digiWrite((value & mask) != 0);
         if (bitOrder == LSBFIRST)
             mask <<= 1;
         else
@@ -250,7 +251,7 @@ byte BlinkPlug::buttonCheck () {
             }
         }
     // if there are no button events, return the overall current button state
-    return lastState ? SOME_ON : ALL_OFF;
+    return lastState == 3 ? ALL_ON : lastState ? SOME_ON : ALL_OFF;
 }
 
 void MemoryPlug::load (word page, void* buf, byte offset, int count) {
@@ -397,6 +398,13 @@ byte DimmerPlug::getReg(byte reg) const {
     return result;
 }
 
+void LuxPlug::setGain(byte high) {
+    send();
+    write(0x81); // write to Timing regiser
+    write(high ? 0x12 : 0x02);
+    stop();
+}
+
 const word* LuxPlug::getData() {
     send();
     write(0xA0 | DATA0LOW);
@@ -462,7 +470,32 @@ const int* GravityPlug::getAxes() {
     return data.w;
 }
 
-byte HeadingPlug::eepromByte(byte reg) const {
+void InputPlug::select(uint8_t channel) {
+    digiWrite(0);
+    mode(OUTPUT);
+
+    delayMicroseconds(slow ? 400 : 50);
+    byte data = 0x10 | (channel & 0x0F);
+    byte mask = 1 << (portNum + 3); // digitalWrite is too slow
+    
+    ATOMIC_BLOCK(ATOMIC_FORCEON) {
+        for (byte i = 0; i < 5; ++i) {
+            byte us = bitRead(data, 4 - i) ? 9 : 3;
+            if (slow)
+                us <<= 3;
+#ifdef PORTD
+            PORTD |= mask;
+            delayMicroseconds(us);
+            PORTD &= ~ mask;
+#else
+            //XXX TINY!
+#endif
+            delayMicroseconds(slow ? 32 : 4);
+        }
+    }
+}
+
+byte HeadingBoard::eepromByte(byte reg) const {
     eeprom.send();
     eeprom.write(reg);
     eeprom.receive();
@@ -471,7 +504,7 @@ byte HeadingPlug::eepromByte(byte reg) const {
     return result;
 }
 
-void HeadingPlug::getConstants() {
+void HeadingBoard::getConstants() {
     for (byte i = 0; i < 18; ++i)
         ((byte*) &C1)[i < 14 ? i^1 : i] = eepromByte(16 + i);
     // Serial.println(C1);
@@ -487,7 +520,7 @@ void HeadingPlug::getConstants() {
     // Serial.println(D, DEC);
 }
 
-word HeadingPlug::adcValue(byte press) const {
+word HeadingBoard::adcValue(byte press) const {
     aux.digiWrite(1);
     adc.send();
     adc.write(0xFF);
@@ -504,33 +537,25 @@ word HeadingPlug::adcValue(byte press) const {
     return result;
 }
 
-void HeadingPlug::setReset(byte reset) const {
-    compass.send();
-    compass.write(0x00);
-    compass.write(reset ? 0x04 : 0x02);
-    compass.stop();
-    delay(2);
-}
-
-void HeadingPlug::begin() {
+void HeadingBoard::begin() {
     // prepare ADC
     aux.mode(OUTPUT);
     aux.digiWrite(0);
     
     // generate 32768 Hz on IRQ pin (OC2B)
+#ifdef TCCR2A
     TCCR2A = bit(COM2B0) | bit(WGM21);
     TCCR2B = bit(CS20);
     OCR2A = 243;
+#else
+    //XXX TINY!
+#endif
     aux.mode3(OUTPUT);
-    
-    // reset the magnetometer
-    delay(10);
-    setReset(0);
     
     getConstants();
 }
 
-void HeadingPlug::pressure(int& temp, int& pres) const {
+void HeadingBoard::pressure(int& temp, int& pres) const {
     word D2 = adcValue(0);
     // Serial.print("D2 = ");
     // Serial.println(D2);
@@ -557,46 +582,151 @@ void HeadingPlug::pressure(int& temp, int& pres) const {
     pres = (X * 10L >> 5) + C7;
 }
 
-void HeadingPlug::heading(int& xaxis, int& yaxis) const {
+void HeadingBoard::heading(int& xaxis, int& yaxis) {
+    // set or reset the magnetometer coil
+    compass.send();
+    compass.write(0x00);
+    compass.write(setReset);
+    compass.stop();
+    delayMicroseconds(50);
+    setReset = 6 - setReset;
+    // perform measurement
     compass.send();
     compass.write(0x00);
     compass.write(0x01);
     compass.stop();
-    delay(50);
+    delay(5);
     compass.send();
     compass.write(0x00);
     compass.receive();
     byte tmp, reg = compass.read(0);
     tmp = compass.read(0);
-    xaxis = (tmp << 8) | compass.read(0);
+    xaxis = ((tmp << 8) | compass.read(0)) - 2048;
     tmp = compass.read(0);
-    yaxis = (tmp << 8) | compass.read(1);
+    yaxis = ((tmp << 8) | compass.read(1)) - 2048;
     compass.stop();
-    // Serial.println(reg, HEX);
 }
 
-void InputPlug::select(uint8_t channel) {
+InfraredPlug::InfraredPlug (uint8_t num)
+        : Port (num), slot (140), gap (80), fill (-1), prev (0) {
     digiWrite(0);
     mode(OUTPUT);
-
-    delayMicroseconds(slow ? 400 : 50);
-    byte data = 0x10 | (channel & 0x0F);
-    byte mask = 1 << (portNum + 3); // digitalWrite is too slow
-    
-    cli();
-    for (byte i = 0; i < 5; ++i) {
-        byte us = bitRead(data, 4 - i) ? 9 : 3;
-        if (slow)
-            us <<= 3;
-        PORTD |= mask;
-        delayMicroseconds(us);
-        PORTD &= ~ mask;
-        delayMicroseconds(slow ? 32 : 4);
-    }
-    sei();
+    mode2(INPUT);
+    digiWrite2(1); // pull-up        
 }
 
-// EMPTY_INTERRUPT(WDT_vect); // just wakes us up to resume
+void InfraredPlug::configure(uint8_t slot4, uint8_t gap256) {
+    slot = slot4;
+    gap = gap256;
+    fill = -1;
+}
+
+void InfraredPlug::poll() {
+    byte bit = digiRead2(); // 0 is interpreted as pulse ON
+    if (fill < 0) {
+        if (fill < -1 || bit == 1)
+            return;
+        fill = 0;
+        prev = micros();
+        memset(buf, 0, sizeof buf);
+    }
+    // act only if the bit changed, using the low bit of the nibble fill count
+    if (bit != (fill & 1) && fill < 2 * sizeof buf) {
+        uint32_t curr = micros(), diff = (curr - prev + 2) >> 2;
+        if (diff > 65000)
+            diff = 65000; // * 4 us, i.e. 260 ms
+        // convert to a slot number, with rounding halfway between each slot
+        word ticks = ((word) diff + slot / 2) / slot;
+        if (ticks > 20)
+            ticks = 20;
+        // condense upper values to fit in the range 0..15
+        byte nibble = ticks;
+        if (nibble > 10)
+            nibble -= (nibble - 10) / 2;
+        buf[fill>>1] |= nibble << ((fill & 1) << 2);
+        ++fill;
+        prev = curr;
+    }
+}
+
+uint8_t InfraredPlug::done() {
+    byte result = 0;
+    if (fill > 0)
+        ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+            if (((micros() - prev) >> 8) >= gap) {
+                result = fill;
+                fill = -2; // prevent new pulses from clobbering buf
+            }
+        }
+    else if (fill < -1)
+        fill = -1; // second call to done() release buffer again for capture
+    return result;
+}
+
+uint8_t InfraredPlug::decoder(uint8_t nibbles) {
+    switch (nibbles) {
+        case 67: // 2 + 64 + 1 nibbles could be a NEC packet
+            if (buf[0] == 0x8D && buf[33] == 0x01) {
+                // check that all nibbles are either 1 or 3
+                for (byte i = 1; i < 33; ++i)
+                    if ((buf[i] & ~0x20) != 0x11)
+                        return UNKNOWN;
+                // valid packet, convert in-place
+                for (byte i = 0; i < 4; ++i) {
+                    byte v;
+                    for (byte j = 0; j < 8; ++j)
+                        v = (v << 1) | (buf[1+j+8*i] >> 5);
+                    buf[i] = v;
+                }
+                return NEC;
+            }
+            break;
+        case 3: // 2 + 1 nibbles could be a NEC repeat packet
+            if (buf[0] == 0x4D && buf[1] == 0x01)
+                return NEC_REP;
+            break;
+    }
+    return UNKNOWN;
+}
+    
+void InfraredPlug::send(const uint8_t* data, uint16_t bits) {
+    // TODO: switch to an interrupt-driven design
+    for (byte i = 0; i < bits; ++i) {
+        digiWrite(bitRead(data[i/8], i%8));
+        delayMicroseconds(4 * slot);
+    }
+    digiWrite(0);
+}
+
+void ProximityPlug::begin() {
+    delay(100);
+    setReg(CONFIG, 0x04);   // reset, STOP1
+    delay(100);
+    // setReg(TPCONFIG, 0xB5); // TPSE, BKA, ACE, TPTBE, TPE
+    setReg(TPCONFIG, 0xB1); // TPSE, BKA, ACE, TPE
+    setReg(CONFIG, 0x15);   // RUN1
+    delay(100);
+}
+
+void ProximityPlug::setReg(byte reg, byte value) const {
+    send();
+    write(reg);
+    write(value);
+    stop();
+}
+
+byte ProximityPlug::getReg(byte reg) const {
+    send();
+    write(reg);
+    receive();
+    byte result = read(1);
+    stop();
+    return result;
+}
+
+// ISR(WDT_vect) { Sleepy::watchdogEvent(); }
+
+static volatile byte watchdogCounter;
 
 void Sleepy::watchdogInterrupts (char mode) {
     // correct for the fact that WDP3 is *not* in bit position 3!
@@ -605,43 +735,256 @@ void Sleepy::watchdogInterrupts (char mode) {
     // pre-calculate the WDTCSR value, can't do it inside the timed sequence
     byte wdtcsr = mode >= 0 ? bit(WDIE) | mode : 0;
     MCUSR &= ~(1<<WDRF); // only generate interrupts, no reset
-    cli();
-    WDTCSR |= (1<<WDCE) | (1<<WDE); // timed sequence
-    WDTCSR = wdtcsr;
-    sei();
+    ATOMIC_BLOCK(ATOMIC_FORCEON) {
+        WDTCSR |= (1<<WDCE) | (1<<WDE); // timed sequence
+        WDTCSR = wdtcsr;
+    }
 }
 
-void Sleepy::powerDown () {
-    byte prrSave = PRR, adcsraSave = ADCSRA;
+void Sleepy::powerDown (byte prrOff) {
+    byte adcsraSave = ADCSRA;
     ADCSRA &= ~ bit(ADEN); // disable the ADC
-    PRR = 0xFF;
+#ifdef PRR
+    byte prrSave = PRR;
+    PRR = prrOff;
+#endif
     // see http://www.nongnu.org/avr-libc/user-manual/group__avr__sleep.html
     set_sleep_mode(SLEEP_MODE_PWR_DOWN);
-    cli();
+    ATOMIC_BLOCK(ATOMIC_FORCEON) {
     sleep_enable();
-    // sleep_bod_disable(); // can't use this, it's not in my avr-libc version!
+    // sleep_bod_disable(); // can't use this - not in my avr-libc version!
+#ifdef BODSE
     MCUCR = MCUCR | bit(BODSE) | bit(BODS); // timed sequence
     MCUCR = MCUCR & ~ bit(BODSE) | bit(BODS);
-    sei();
+#endif
+    }
     sleep_cpu();
     sleep_disable();
     // re-enable what we disabled
+#ifdef PRR
     PRR = prrSave;
+#endif
     ADCSRA = adcsraSave;
 }
 
-void Sleepy::loseSomeTime (word msecs) {
+byte Sleepy::loseSomeTime (word msecs) {
     // only slow down for periods longer than the watchdog granularity
     while (msecs >= 16) {
         char wdp = 0; // wdp 0..9 corresponds to roughly 16..8192 ms
         while (msecs >= (32 << wdp) && wdp < 9)
             ++wdp;
+        watchdogCounter = 0;
         watchdogInterrupts(wdp);
         powerDown();
         watchdogInterrupts(-1); // off
+        if (watchdogCounter == 0)
+            return 0; // lost some time, but got interrupted
         // adjust the milli ticks, since we will have missed several
         extern volatile unsigned long timer0_millis;
         timer0_millis += 16 << wdp;
         msecs -= 16 << wdp;
     }
+    return 1; // lost some time as planned
 }
+
+void Sleepy::watchdogEvent() {
+    ++watchdogCounter;
+}
+
+Scheduler::Scheduler (byte size) : maxTasks (size) {
+    byte bytes = size * sizeof *tasks;
+    tasks = (word*) malloc(bytes);
+    memset(tasks, 0xFF, bytes);
+}
+
+Scheduler::Scheduler (word* buf, byte size) : tasks (buf), maxTasks (size) {
+    byte bytes = size * sizeof *tasks;
+    memset(tasks, 0xFF, bytes);
+}
+
+char Scheduler::poll() {
+    // all times in the tasks array are relative to the "remaining" value
+    // i.e. only remaining counts down while waiting for the next timeout
+    if (remaining == 0) {
+        word lowest = ~0;
+        for (byte i = 0; i < maxTasks; ++i) {
+            if (tasks[i] == 0) {
+                tasks[i] = ~0;
+                return i;
+            }
+            if (tasks[i] < lowest)
+                lowest = tasks[i];
+        }
+        if (lowest != ~0)
+            for (byte i = 0; i < maxTasks; ++i)
+                tasks[i] -= lowest;
+        remaining = lowest;
+    } else if (ms100.poll(100))
+        --remaining;
+    return -1;
+}
+
+char Scheduler::pollWaiting() {
+    // first wait until the remaining time we need to wait is less than 0.1s
+    while (remaining > 0) {
+        if (!Sleepy::loseSomeTime(100)) // approximate, actually waits 96 ms
+            return -1;
+        --remaining;
+    }
+    // now lose some more time until that 0.1s mark
+    if (!Sleepy::loseSomeTime(ms100.remaining()))
+        return -1;
+    // lastly, just ignore the 0..15 ms still left to go until the 0.1s mark
+    return poll();
+}
+
+void Scheduler::timer(byte task, word tenths) {
+    // if new timer will go off sooner than the rest, then adjust all entries
+    if (tenths < remaining) {
+        word diff = remaining - tenths;
+        for (byte i = 0; i < maxTasks; ++i)
+            if (tasks[i] != ~0)
+                tasks[i] += diff;
+        remaining = tenths;
+    }
+    tasks[task] = tenths - remaining;
+}
+
+void Scheduler::cancel(byte task) {
+    tasks[task] = ~0;
+}
+
+#ifdef Stream_h // only available in recent Arduino IDE versions
+
+InputParser::InputParser (byte* buf, byte size, Commands* ctab, Stream& stream)
+        : buffer (buf), limit (size), cmds (ctab), io (stream) {
+    reset();
+}
+
+InputParser::InputParser (byte size, Commands* ctab, Stream& stream)
+        : limit (size), cmds (ctab), io (stream) {
+    buffer = (byte*) malloc(size);
+    reset();
+}
+
+void InputParser::reset() {
+    fill = next = 0;
+    instring = hexmode = hasvalue = 0;
+    top = limit;
+}
+
+void InputParser::poll() {
+    if (!io.available())
+        return;
+    char ch = io.read();
+    if (ch < ' ' || fill >= top) {
+        reset();
+        return;
+    }
+    if (instring) {
+        if (ch == '"') {
+            buffer[fill++] = 0;
+            do
+                buffer[--top] = buffer[--fill];
+            while (fill > value);
+            ch = top;
+            instring = 0;
+        }
+        buffer[fill++] = ch;
+        return;
+    }
+    if (hexmode && ('0' <= ch && ch <= '9' ||
+                    'A' <= ch && ch <= 'F' ||
+                    'a' <= ch && ch <= 'f')) {
+        if (!hasvalue)
+            value = 0;
+        if (ch > '9')
+            ch += 9;
+        value <<= 4;
+        value |= (byte) (ch & 0x0F);
+        hasvalue = 1;
+        return;
+    }
+    if ('0' <= ch && ch <= '9') {
+        if (!hasvalue)
+            value = 0;
+        value = 10 * value + (ch - '0');
+        hasvalue = 1;
+        return;
+    }
+    hexmode = 0;
+    switch (ch) {
+        case '$':   hexmode = 1;
+                    return;
+        case '"':   instring = 1;
+                    value = fill;
+                    return;
+        case ':':   (word&) buffer[fill] = value;
+                    fill += 2;
+                    value >>= 16;
+                    // fall through
+        case '.':   (word&) buffer[fill] = value;
+                    fill += 2;
+                    hasvalue = 0;
+                    return;
+        case '-':   value = - value;
+                    hasvalue = 0;
+                    return;
+        case ' ':   if (!hasvalue)
+                        return;
+                    // fall through
+        case ',':   buffer[fill++] = value;
+                    hasvalue = 0;
+                    return;
+    }
+    if (hasvalue) {
+        io.print("Unrecognized character: ");
+        io.print(ch);
+        io.println();
+        reset();
+        return;
+    }
+    
+    for (Commands* p = cmds; ; ++p) {
+        char code = pgm_read_byte(&p->code);
+        if (code == 0)
+            break;
+        if (ch == code) {
+            byte bytes = pgm_read_byte(&p->bytes);
+            if (fill < bytes) {
+                io.print("Not enough data, need ");
+                io.print((int) bytes);
+                io.println(" bytes");
+            } else {
+                memset(buffer + fill, 0, top - fill);
+                ((void (*)()) pgm_read_word(&p->fun))();
+            }
+            reset();
+            return;
+        }
+    }
+        
+    io.print("Known commands:");
+    for (Commands* p = cmds; ; ++p) {
+        char code = pgm_read_byte(&p->code);
+        if (code == 0)
+            break;
+        io.print(' ');
+        io.print(code);
+    }
+    io.println();
+}
+
+InputParser& InputParser::get(void* ptr, byte len) {
+    memcpy(ptr, buffer + next, len);
+    next += len;
+    return *this;
+}
+
+InputParser& InputParser::operator >> (const char*& v) {
+    byte offset = buffer[next++];
+    v = top <= offset && offset < limit ? (char*) buffer + offset : "";
+    return *this;
+}
+
+#endif // Stream_h

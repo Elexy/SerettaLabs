@@ -1,6 +1,6 @@
 // RFM12B driver implementation
 // 2009-02-09 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id: RF12.cpp 6019M 2010-11-18 03:45:19Z (local) $
+// $Id: RF12.cpp 7200 2011-02-25 15:14:21Z jcw $
 
 #include "RF12.h"
 #include <avr/io.h>
@@ -171,7 +171,6 @@ uint16_t rf12_control(uint16_t cmd) {
 }
 
 static void rf12_interrupt() {
-bitSet(PINB, 0);
     // a transfer of 2x 16 bits @ 2 MHz over SPI takes 2x 8 us inside this ISR
     rf12_xfer(0x0000);
     
@@ -205,7 +204,6 @@ bitSet(PINB, 0);
             
         rf12_xfer(RF_TXREG_WRITE + out);
     }
-// bitClear(PINB, 0);
 }
 
 static void rf12_recvStart () {
@@ -349,7 +347,7 @@ void rf12_onOff (uint8_t value) {
     rf12_xfer(value ? RF_XMITTER_ON : RF_IDLE_MODE);
 }
 
-uint8_t rf12_config () {
+uint8_t rf12_config (uint8_t show) {
     uint16_t crc = ~0;
     for (uint8_t i = 0; i < RF12_EEPROM_SIZE; ++i)
         crc = _crc16_update(crc, eeprom_read_byte(RF12_EEPROM_ADDR + i));
@@ -365,10 +363,11 @@ uint8_t rf12_config () {
             group = b;
         else if (b == 0)
             break;
-        else
+        else if (show)
             Serial.print(b);
     }
-    Serial.println();
+    if (show)
+        Serial.println();
     
     rf12_initialize(nodeId, nodeId >> 6, group);
     return nodeId & RF12_HDR_MASK;

@@ -1,6 +1,6 @@
 // Port library interface to SHT11 sensors connected via "something like I2C"
 // 2009-02-16 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id: PortsSHT11.cpp 5402 2010-04-30 19:24:52Z jcw $
+// $Id: PortsSHT11.cpp 6540 2010-12-24 14:41:03Z jcw $
 
 // rewritten in C++ using the SENSIRION SHTxx Sample Code Application Note
 // the CRC calculation is from the SENSIRION SHTxx CRC Application Note
@@ -174,6 +174,7 @@ uint8_t SHT11::measure(uint8_t type, void (*delayFun)()) {
     return 1;
 }
 
+#ifndef __AVR_ATtiny84__
 void SHT11::calculate(float& rh_true, float& t_C) const {
     const float C1=-2.0468;
     const float C2= 0.0367;
@@ -193,3 +194,6 @@ float SHT11::dewpoint(float h, float t) {
     float k = (log10(h)-2)/0.4343 + (17.62*t)/(243.12+t); 
     return 243.12*k/(17.62-k);  
 } 
+#else
+//XXX TINY!
+#endif

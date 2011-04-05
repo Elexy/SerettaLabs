@@ -15,6 +15,7 @@ typedef struct {
     int afterHeater; // temperature coming out of the tank
     int floorIn; // temperature going in the floor
     int floorFlow; // The water flow speed.
+	boolean fpPause; // pausing the floor pump
 } casitaData;
 
 typedef struct {

@@ -1,27 +1,34 @@
 // Demo of the Lux Plug, based on the LuxPlug class in the Ports library
 // 2010-03-18 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id: lux_demo.pde 5885 2010-08-09 09:32:10Z jcw $
+// $Id: lux_demo.pde 6540 2010-12-24 14:41:03Z jcw $
 
 #include <Ports.h>
 #include <RF12.h> // needed to avoid a linker error :(
     
 PortI2C myBus (1);
 LuxPlug sensor (myBus, 0x39);
+byte highGain;
 
 void setup () {
     Serial.begin(57600);
-    Serial.println("\n[lux_demo]");
+    Serial.println("\n[lux_demo.2]");
     sensor.begin();
 }
 
-void loop () {
+void loop () {    
     const word* photoDiodes = sensor.getData();
     Serial.print("LUX ");
     Serial.print(photoDiodes[0]);
     Serial.print(' ');
     Serial.print(photoDiodes[1]);
     Serial.print(' ');
-    Serial.println(sensor.calcLux());
-    
+    Serial.print(sensor.calcLux());
+    Serial.print(' ');
+    Serial.println(highGain);
+
+    // need to wait after changing the gain
+    //  see http://talk.jeelabs.net/topic/608
+    highGain = ! highGain;
+    sensor.setGain(setGain);
     delay(1000);
 }

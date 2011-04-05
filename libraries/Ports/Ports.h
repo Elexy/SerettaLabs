@@ -1,12 +1,13 @@
 // Ports library definitions
 // 2009-02-13 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id: Ports.h 5993 2010-09-03 22:18:09Z jcw $
+// $Id: Ports.h 7213 2011-02-28 19:47:27Z jcw $
 
 #ifndef Ports_h
 #define Ports_h
 
 #include <WProgram.h>
 #include <stdint.h>
+#include <avr/pgmspace.h>
 
 class Port {
 protected:
@@ -52,6 +53,8 @@ public:
         { return digitalRead(3); }
     static void digiWrite3(uint8_t value)
         { return digitalWrite(3, value); }
+    static void anaWrite3(uint8_t val)
+        { analogWrite(3, val); }
         
     // both pins: data on DIO, clock on AIO
     inline void shift(uint8_t bitOrder, uint8_t value) const
@@ -172,13 +175,53 @@ public:
     void set(word ms);
 };
 
-// interface for the Blink Plug - see http://jeelabs.org/bp1
+// Low-power utility code.
+class Sleepy {
+public:
+    // start the watchdog timer (or disable it if mode < 0)
+    static void watchdogInterrupts (char mode);
+    
+    // enter low-power mode, wake up with watchdog, INT0/1, or pin-change
+    static void powerDown (byte prrOff =0xFF);
+    
+    // spend some time in low-power mode, the timing is only approximate
+    // returns 1 if all went normally, or 0 if some other interrupt occurred
+    static byte loseSomeTime (word msecs);
 
+    // this must be called from your watchdog interrupt code
+    static void watchdogEvent();
+};
+
+// simple task scheduler for times up to 6000 seconds
+class Scheduler {
+    word* tasks, remaining;
+    byte maxTasks;
+    MilliTimer ms100;
+public:
+    // initialize for a specified maximum number of tasks
+    Scheduler (byte max);
+    Scheduler (word* buf, byte max);
+
+    // return next task to run, or -1 if there is none
+    char poll();
+    // same as poll, but wait for event in power-down mode
+    char pollWaiting();
+    
+    // set a task timer, in tenths of seconds
+    void timer(byte task, word tenths);
+    // cancel a task timer
+    void cancel(byte task);
+    
+    // return true if a task timer is not running
+    byte idle(byte task) { return tasks[task] == ~0; }
+};
+
+// interface for the Blink Plug - see http://jeelabs.org/bp1
 class BlinkPlug : public Port {
     MilliTimer debounce;
     byte leds, lastState, checkFlags;
 public:
-    enum { ALL_OFF, ON1, OFF1, ON2, OFF2, SOME_ON }; // returned by buttonCheck
+    enum { ALL_OFF, ON1, OFF1, ON2, OFF2, SOME_ON, ALL_ON }; // for buttonCheck
     
     BlinkPlug (byte port)
         : Port (port), leds (0), lastState (0), checkFlags (0) {}
@@ -191,7 +234,6 @@ public:
 };
 
 // interface for the Memory Plug - see http://jeelabs.org/mp1
-
 class MemoryPlug : public DeviceI2C {
     uint32_t nextSave;
 public:
@@ -219,7 +261,6 @@ public:
 };
 
 // interface for the UART Plug - see http://jeelabs.org/up1
-
 class UartPlug : public Print {
     DeviceI2C dev;
     // avoid per-byte access, fill entire buffer instead to reduce I2C overhead
@@ -240,7 +281,6 @@ public:
 };
 
 // interface for the Dimmer Plug - see http://jeelabs.org/dp1
-
 class DimmerPlug : public DeviceI2C {
 public:
     enum {
@@ -260,14 +300,13 @@ public:
 };
 
 // interface for the Lux Plug - see http://jeelabs.org/xp1
-
 class LuxPlug : public DeviceI2C {
     union { byte b[4]; word w[2]; } data;
 public:
     enum {
         CONTROL, TIMING,
         THRESHLOWLOW, THRESHLOWHIGH, THRESHHIGHLOW, THRESHHIGHHIGH, INTERRUPT,
-        ID = 0xA,
+        LUXID = 0xA,
         DATA0LOW = 0xC, DATA0HIGH, DATA1LOW, DATA1HIGH,
     };
 
@@ -280,13 +319,14 @@ public:
         stop();
     }
     
+    void setGain(byte high);
+    
     const word* getData();
 
     word calcLux(byte iGain =0, byte tInt =2) const;
 };
 
 // interface for the Gravity Plug - see http://jeelabs.org/gp1
-
 class GravityPlug : public DeviceI2C {
     union { byte b[6]; int w[3]; } data;
 public:
@@ -297,33 +337,7 @@ public:
     const int* getAxes();
 };
 
-// interface for the Heading Plug - see http://jeelabs.org/hp1
-// FIXME - this HDPM01 interface class isn't working properly yet!
-
-class HeadingPlug : public PortI2C {
-    DeviceI2C eeprom, adc, compass;
-    Port aux;
-    // keep following fields in order:
-    word C1, C2, C3, C4, C5, C6, C7;
-    byte A, B, C, D;
-
-    byte eepromByte(byte reg) const;
-    void getConstants();
-    word adcValue(byte press) const;
-    void setReset(byte reset) const;
-
-public:
-    HeadingPlug (int num)
-        : PortI2C (num), eeprom (*this, 0x50), adc (*this, 0x77),
-          compass (*this, 0x30), aux (5-num) {}
-    
-    void begin();
-    void pressure(int& temp, int& pres) const;
-    void heading(int& xaxis, int& yaxis) const;
-};
-
 // interface for the Input Plug - see http://jeelabs.org/ip1
-
 class InputPlug : public Port {
     uint8_t slow;
 public:
@@ -332,18 +346,117 @@ public:
     void select(uint8_t channel);
 };
 
-// low-power utilities
-
-class Sleepy {
+// interface for the Infrared Plug - see http://jeelabs.org/ir1
+class InfraredPlug : public Port {
+    uint8_t slot, gap, buf [40];
+    char fill;
+    uint32_t prev;
 public:
-    // start the watchdog timer (or disable it if mode < 0)
-    static void watchdogInterrupts (char mode);
+    // initialize with default values for NEC protocol
+    InfraredPlug (uint8_t num);
     
-    // enter low-power mode, wake up with watchdog, INT0/1, or pin-change
-    static void powerDown ();
+    // set slot size (us*4) and end-of-data gap (us*256)
+    void configure(uint8_t slot4, uint8_t gap256 =80);
     
-    // spend some time in low-power mode, the timing is only approximate
-    static void loseSomeTime (word msecs);
+    // call this continuously or at least right after a pin change
+    void poll();
+    
+    // returns number of nibbles read, or 0 if not yet ready
+    uint8_t done();
+    
+    // try to decode a received packet, return type of packet
+    // if recognized, the receive buffer will be overwritten with the results
+    enum { UNKNOWN, NEC, NEC_REP };
+    uint8_t decoder(uint8_t nibbles);
+    
+    // access to the receive buffer
+    const uint8_t* buffer() { return buf; }
+    
+    // send out a bit pattern, cycle time is the "slot4" config value
+    void send(const uint8_t* data, uint16_t bits);
 };
+
+// interface for the Heading Board - see http://jeelabs.org/hb1
+class HeadingBoard : public PortI2C {
+    DeviceI2C eeprom, adc, compass;
+    Port aux;
+    // keep following fields in order:
+    word C1, C2, C3, C4, C5, C6, C7;
+    byte A, B, C, D, setReset;
+
+    byte eepromByte(byte reg) const;
+    void getConstants();
+    word adcValue(byte press) const;
+
+public:
+    HeadingBoard (int num)
+        : PortI2C (num), eeprom (*this, 0x50), adc (*this, 0x77),
+          compass (*this, 0x30), aux (5-num), setReset (0x02) {}
+    
+    void begin();
+    void pressure(int& temp, int& pres) const;
+    void heading(int& xaxis, int& yaxis);
+};
+
+// interface for the Proximity Plug - see http://jeelabs.org/yp1
+class ProximityPlug : public DeviceI2C {
+public:
+    enum {
+        FIFO, FAULT, TPSTATUS, TPCONFIG,
+        STR1, STR2, STR3, STR4, STR5, STR6, STR7, STR8, 
+        ECEMR, MNTPR, MTPR, TASPR, SCR, LPCR, SKTR,
+        CONFIG, SINFO,
+    };
+
+    ProximityPlug (PortI2C& port, byte num =0)
+        : DeviceI2C (port, 0x5C + num) {}
+    
+    void begin();
+    
+    void setReg(byte reg, byte value) const;
+    byte getReg(byte reg) const;
+};
+
+#ifdef Stream_h // only available in recent Arduino IDE versions
+
+// simple parser for input data and one-letter commands
+class InputParser {
+public:
+    typedef struct {
+        char code;      // one-letter command code
+        byte bytes;     // number of bytes required as input
+        void (*fun)();  // code to call for this command
+    } Commands;
+    
+    // set up with a buffer of specified size
+    InputParser (byte size, Commands PROGMEM*, Stream& =Serial);
+    InputParser (byte* buf, byte size, Commands PROGMEM*, Stream& =Serial);
+    
+    // number of data bytes
+    byte count() { return fill; }
+    
+    // call this frequently to check for incoming data
+    void poll();
+    
+    InputParser& operator >> (char& v)      { return get(&v, 1); }
+    InputParser& operator >> (byte& v)      { return get(&v, 1); }
+    InputParser& operator >> (int& v)       { return get(&v, 2); }
+    InputParser& operator >> (word& v)      { return get(&v, 2); }
+    InputParser& operator >> (long& v)      { return get(&v, 4); }
+    InputParser& operator >> (uint32_t& v)  { return get(&v, 4); }
+    InputParser& operator >> (const char*& v);
+
+private:
+    InputParser& get(void*, byte);
+    void reset();
+    
+    byte *buffer, limit, fill, top, next;
+    byte instring, hexmode, hasvalue;
+    uint32_t value;
+    Commands* cmds;
+    Stream& io;
+};
+
+#endif // Stream_h
 
 #endif

@@ -1,10 +1,11 @@
+//#include <EtherCard.h>
 #include <Ports.h>
 #include <PortsLCD.h>
 #include <RF12.h>
 #include <payload.h>
 #include <PortsSHT11.h>
 
-SHT11 sht11 (4);
+SHT11 sht11 (3);
 
 Port pir_ldr (1);
 
@@ -148,6 +149,8 @@ void secondLine()
 void receive () {
   // data from the casita
   if (rf12_recvDone() && rf12_crc == 0) {
+    Serial.println("received packet");
+    Serial.print(RF12_HDR_MASK & rf12_hdr);
     if((RF12_HDR_MASK & rf12_hdr) == 30) { // casitadata
       casitaData* buf =  (casitaData*) rf12_data;
 
@@ -159,10 +162,10 @@ void receive () {
       casita.needPump  = buf->needPump;
       casita.xchangeOut= buf->xchangeOut;
       casita.afterHeater= buf->afterHeater;
-      
+      casita.fpPause   = buf->fpPause;      
     } else if ((RF12_HDR_MASK & rf12_hdr) == 1) { //paneldata
       panelData* buf =  (panelData*) rf12_data;
-
+Serial.println("received paneldata");
       panels.tempOut = buf->tempOut;
       panels.tempIn  = buf->tempIn;
       panels.tempAmb = buf->tempAmb;
@@ -179,7 +182,6 @@ void receive () {
 }
 
 void setup() {
-  receive();
   // set up the LCD's number of rows and columns: 
   lcd.begin(16, 2);
   // Print a message to the LCD.
@@ -202,51 +204,17 @@ void setup() {
 }
 
 boolean heater = false;
-MilliTimer heatPauseTimer;
-MilliTimer heaterTimer;
-boolean pauseHeat = false;
 
 void loop() {
   receive();
-
   if ( !(roomData.temp > roomData.dTemp + 1) 
       &&
       roomData.temp <= roomData.dTemp - 1 ) {      
-    roomData.heat = 1 & !pauseHeat;
-    if(!heater) {
-      heaterTimer.set(30000);
-      Serial.println("set heaterTimer");
-    }
+    roomData.heat = 1;
     heater = true;
-//    if(reportTimer.poll(1000)) Serial.println(heaterTimer);
   } else {
     roomData.heat = 0; 
     heater = false;
-  }
-  if(reportTimer.poll(1000) && heaterTimer.remaining()) 
-    Serial.println(heaterTimer.remaining());
-  // if there is no significant temp rise, stop pump for a while
-  if(heaterTimer.poll() || pauseHeat) {
-    if(reportTimer.poll(1000)) Serial.println("15sec after heaterTimer set");
-    if (casita.afterHeater < (casita.xchangeOut + 100)) {
-      if(reportTimer.poll(1000)) Serial.println("no heat rise after 15sec");
-      if(!pauseHeat) {
-        heatPauseTimer.set(60000);
-        pauseHeat = true;
-        Serial.print("set heatPauseTmer: ");
-      } else {
-        if(reportTimer.poll(1000)) Serial.println(heatPauseTimer.remaining());
-        if(pauseHeat && heatPauseTimer.poll()) {
-          pauseHeat = false;
-          heaterTimer.set(30000);
-          Serial.println("stop heat pause 20sec");
-        }
-      }
-    } else {
-      Serial.println("heater works");      
-      heaterTimer.set(30000);
-      pauseHeat = false;
-    }
   }
 
   // set the cursor to column 0, line 1
@@ -258,7 +226,7 @@ void loop() {
   lcdPrintDec(panels.tempAmb);
   lcd.write(3);
   lcd.print("");
-  if(pauseHeat) {
+  if(casita.fpPause) {
     lcd.print("p");
   } else {
     lcd.print((int) roomData.heat);
@@ -268,7 +236,7 @@ void loop() {
 
   if (sendTimerPanel.poll(5000)) {
     newReadings();     
-
+    
     Serial.print("Living ");
     Serial.print((int) roomData.light);
     Serial.print(' ');
@@ -279,11 +247,13 @@ void loop() {
     Serial.print((int) roomData.temp);
     Serial.print(' ');
     Serial.print(showHeat());
+    Serial.println("panels: ");
+    Serial.print(panels.tempAmb);
     
     while (!rf12_canSend())
       rf12_recvDone();
     rf12_sendStart(0, &roomData, sizeof roomData);            
-    //        rf12_sendWait(2);
+    rf12_sendWait(2);
     Serial.print(" ");
     Serial.println(roomData.heat ? '1' : '0');
   }

@@ -29,6 +29,7 @@ volatile int NbTopsFan; //measuring the rising edges of the signal
 int Calc;                               
 int sensorPointer;  // pointer to step though sensors
 
+
 // sensors we will read here
 SensorInfo sensors[4] = {
     {tankTopID, "tankTop"}, 
@@ -52,7 +53,7 @@ void rpm ()     //This is the function that the interupt calls
 void receive () {
   // data from the thermostat
   if (rf12_recvDone() && rf12_crc == 0) {
-    if ((RF12_HDR_MASK & rf12_hdr) == 16) {
+    if ((RF12_HDR_MASK & rf12_hdr) == 17) {
       roomBoard* buf =  (roomBoard*) rf12_data;
 
       payloadData.floorPump = buf->heat;
@@ -87,8 +88,10 @@ void setup() {
 
   floorPump.mode(OUTPUT);
   floorPump.digiWrite(true); //inverted switch so off is high
+ 
   payloadData.floorPump = false;
   payloadData.fpPwm = 100;
+  payloadData.fpPause = false;
 
   solarPump.mode2(OUTPUT);
   solarPump.digiWrite2(true);  //inverted switch so off is high
@@ -104,19 +107,64 @@ void setup() {
   sensorPointer = 0; //start with the first sensor
 }
 
+MilliTimer heatPauseTimer;
+MilliTimer heaterTimer;
+
+#define heatPause 60000
+#define heaterWait 45000
+#define minFloorInTemp 350
+
+boolean heat = false;
+
 /**
  * The main loop
  */
 void loop() {
   receive();
   
-//  byte on = millis() % 10 >= 2;    
-  floorPump.digiWrite(!payloadData.floorPump); // & on));
-  
 //  Serial.print("po");
   payloadData.solarPump = (panelOut > payloadData.tankTop);
   solarPump.digiWrite2(!(payloadData.solarPump));
 //  Serial.println(payloadData.solarPump ? '1' : '0');
+
+  // if there is no significant temp rise, stop pump for a while
+  if(payloadData.afterHeater < (payloadData.xchangeOut + 100)
+    ||
+    payloadData.afterHeater < minFloorInTemp) {
+    if (heaterTimer.poll() || heaterTimer.remaining() == 0) {
+//  Serial.println("heaterTimer = 0");
+      if(payloadData.fpPause) {
+        if(heatPauseTimer.poll()) {
+          payloadData.fpPause = false;
+          heaterTimer.set(heaterWait);
+ //         Serial.println("heater pause over: ");
+ //         Serial.println(heaterTimer.remaining());
+        } 
+      } else {        
+        heatPauseTimer.set(heatPause);
+        payloadData.fpPause = true;
+//        Serial.print("set heatPauseTmer: ");
+//        Serial.println(heatPauseTimer.remaining());
+      }       
+    } 
+    if(heaterTimer.idle() && !payloadData.fpPause) {
+      heaterTimer.set(heaterWait);
+//      Serial.print("reset heaterTimer");
+    }
+  } else {
+    // heater works
+//    if(sendTimerPanel.poll(1000)) Serial.println("heater works");
+    payloadData.fpPause = false;
+  } 
+  floorPump.digiWrite(!(payloadData.floorPump && !payloadData.fpPause));
+  
+//  if(sendTimerPanel.poll(1000)) {
+//    Serial.print(payloadData.fpPause ? "pause " : "go ");
+//    Serial.print(heatPauseTimer.remaining());
+//    Serial.print(payloadData.floorPump ? "fp " : "nofp ");
+//    Serial.print(heaterTimer.remaining());
+//   Serial.println(payloadData.floorPump && !payloadData.fpPause);
+//  } 
   
   if (sendTimerPanel.poll(1500)) {
     needToSend = true;
@@ -154,20 +202,20 @@ void loop() {
     }
   }
   
-  if(payloadData.solarPump) {
-    if(millis() + 120000 > cycleTimer// start + 2 minutes
-       &&
-       panelOut <= payloadData.tankIn + 100) {
-      // if panel out temp is less then 10c higher, the lop must be full
-      // optimize insulation to get to max 5 degrees
-      payloadData.needPump = false;
-    } else {
-      payloadData.needPump = true;
-      if(!cycleTimer == 0) cycleTimer = millis();      
-    }
-  } else {
-    cycleTimer = 0;
-  }
+//  if(payloadData.solarPump) {
+//    if(millis() + 120000 > cycleTimer// start + 2 minutes
+//       &&
+//       panelOut <= payloadData.tankIn + 100) {
+//      // if panel out temp is less then 10c higher, the lop must be full
+//      // optimize insulation to get to max 5 degrees
+//      payloadData.needPump = false;
+//    } else {
+//      payloadData.needPump = true;
+//      if(!cycleTimer == 0) cycleTimer = millis();      
+//    }
+//  } else {
+//    cycleTimer = 0;
+//  }
   
   if (needToSend) {
     needToSend = false;
