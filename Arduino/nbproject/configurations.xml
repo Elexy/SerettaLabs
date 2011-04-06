@@ -1,0 +1,612 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configurationDescriptor version="69">
+  <logicalFolder name="root" displayName="root" projectFiles="true">
+    <logicalFolder name="HeaderFiles"
+                   displayName="Header Files"
+                   projectFiles="true">
+    </logicalFolder>
+    <logicalFolder name="ResourceFiles"
+                   displayName="Resource Files"
+                   projectFiles="true">
+    </logicalFolder>
+    <logicalFolder name="SourceFiles"
+                   displayName="Source Files"
+                   projectFiles="true">
+      <logicalFolder name="Arduino" displayName="Arduino" projectFiles="true">
+        <logicalFolder name="Arduino"
+                       displayName="Arduino"
+                       projectFiles="true"
+                       kind="SOURCE_LOGICAL_FOLDER">
+          <logicalFolder name="applet"
+                         displayName="applet"
+                         projectFiles="true"
+                         kind="SOURCE_LOGICAL_FOLDER">
+            <itemPath>applet/Arduino.cpp</itemPath>
+          </logicalFolder>
+        </logicalFolder>
+        <logicalFolder name="blinker"
+                       displayName="blinker"
+                       projectFiles="true"
+                       kind="SOURCE_LOGICAL_FOLDER">
+          <itemPath>../blinker/blinker.pde</itemPath>
+        </logicalFolder>
+        <logicalFolder name="Casita"
+                       displayName="Casita"
+                       projectFiles="true"
+                       kind="SOURCE_LOGICAL_FOLDER">
+          <itemPath>../Casita/Casita.pde</itemPath>
+        </logicalFolder>
+        <logicalFolder name="ds18b20Par"
+                       displayName="ds18b20Par"
+                       projectFiles="true"
+                       kind="SOURCE_LOGICAL_FOLDER">
+          <itemPath>../ds18b20Par/ds18b20Par.pde</itemPath>
+        </logicalFolder>
+        <logicalFolder name="dsTest"
+                       displayName="dsTest"
+                       projectFiles="true"
+                       kind="SOURCE_LOGICAL_FOLDER">
+          <itemPath>../dsTest/dsTest.pde</itemPath>
+        </logicalFolder>
+        <logicalFolder name="etherNode"
+                       displayName="etherNode"
+                       projectFiles="true"
+                       kind="SOURCE_LOGICAL_FOLDER">
+          <itemPath>../etherNode/etherNode.pde</itemPath>
+        </logicalFolder>
+        <logicalFolder name="etherNodeV1"
+                       displayName="etherNodeV1"
+                       projectFiles="true"
+                       kind="SOURCE_LOGICAL_FOLDER">
+          <itemPath>../etherNodeV1/etherNodeV1.pde</itemPath>
+        </logicalFolder>
+        <logicalFolder name="lcd"
+                       displayName="lcd"
+                       projectFiles="true"
+                       kind="SOURCE_LOGICAL_FOLDER">
+          <itemPath>../lcd/lcd.pde</itemPath>
+        </logicalFolder>
+        <logicalFolder name="lcd_demo"
+                       displayName="lcd_demo"
+                       projectFiles="true"
+                       kind="SOURCE_LOGICAL_FOLDER">
+          <itemPath>../lcd_demo/lcd_demo.pde</itemPath>
+        </logicalFolder>
+        <logicalFolder name="libraries"
+                       displayName="libraries"
+                       projectFiles="true"
+                       kind="SOURCE_LOGICAL_FOLDER">
+          <logicalFolder name="EtherCard"
+                         displayName="EtherCard"
+                         projectFiles="true"
+                         kind="SOURCE_LOGICAL_FOLDER">
+            <logicalFolder name="examples"
+                           displayName="examples"
+                           projectFiles="true"
+                           kind="SOURCE_LOGICAL_FOLDER">
+              <logicalFolder name="etherNode"
+                             displayName="etherNode"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/EtherCard/examples/etherNode/etherNode.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="rbbb_server"
+                             displayName="rbbb_server"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/EtherCard/examples/rbbb_server/rbbb_server.pde</itemPath>
+              </logicalFolder>
+            </logicalFolder>
+            <itemPath>../libraries/EtherCard/CHANGES.txt</itemPath>
+            <itemPath>../libraries/EtherCard/EtherCard.cpp</itemPath>
+            <itemPath>../libraries/EtherCard/EtherCard.h</itemPath>
+            <itemPath>../libraries/EtherCard/dnslkup.cpp</itemPath>
+            <itemPath>../libraries/EtherCard/dnslkup.h</itemPath>
+            <itemPath>../libraries/EtherCard/enc28j60.cpp</itemPath>
+            <itemPath>../libraries/EtherCard/enc28j60.h</itemPath>
+            <itemPath>../libraries/EtherCard/enc28j60_defs.h</itemPath>
+            <itemPath>../libraries/EtherCard/ip_arp_udp_tcp.cpp</itemPath>
+            <itemPath>../libraries/EtherCard/ip_arp_udp_tcp.h</itemPath>
+            <itemPath>../libraries/EtherCard/ip_config.h</itemPath>
+            <itemPath>../libraries/EtherCard/net.h</itemPath>
+            <itemPath>../libraries/EtherCard/websrv_help_functions.cpp</itemPath>
+            <itemPath>../libraries/EtherCard/websrv_help_functions.h</itemPath>
+          </logicalFolder>
+          <logicalFolder name="OneWire"
+                         displayName="OneWire"
+                         projectFiles="true"
+                         kind="SOURCE_LOGICAL_FOLDER">
+            <logicalFolder name="examples"
+                           displayName="examples"
+                           projectFiles="true"
+                           kind="SOURCE_LOGICAL_FOLDER">
+              <logicalFolder name="sample"
+                             displayName="sample"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/OneWire/examples/sample/sample.pde</itemPath>
+              </logicalFolder>
+              <itemPath>../libraries/OneWire/examples/readme.txt</itemPath>
+            </logicalFolder>
+            <itemPath>../libraries/OneWire/OneWire.cpp</itemPath>
+            <itemPath>../libraries/OneWire/OneWire.h</itemPath>
+            <itemPath>../libraries/OneWire/keywords.txt</itemPath>
+          </logicalFolder>
+          <logicalFolder name="payload"
+                         displayName="payload"
+                         projectFiles="true"
+                         kind="SOURCE_LOGICAL_FOLDER">
+            <itemPath>../libraries/payload/payload.cpp</itemPath>
+            <itemPath>../libraries/payload/payload.h</itemPath>
+          </logicalFolder>
+          <logicalFolder name="Ports"
+                         displayName="Ports"
+                         projectFiles="true"
+                         kind="SOURCE_LOGICAL_FOLDER">
+            <logicalFolder name="examples"
+                           displayName="examples"
+                           projectFiles="true"
+                           kind="SOURCE_LOGICAL_FOLDER">
+              <logicalFolder name="accel2125_demo"
+                             displayName="accel2125_demo"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/accel2125_demo/accel2125_demo.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="blink_demo"
+                             displayName="blink_demo"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/blink_demo/blink_demo.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="blink_ports"
+                             displayName="blink_ports"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/blink_ports/blink_ports.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="blink_recv"
+                             displayName="blink_recv"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/blink_recv/blink_recv.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="blink_xmit"
+                             displayName="blink_xmit"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/blink_xmit/blink_xmit.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="bmp085demo"
+                             displayName="bmp085demo"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/bmp085demo/bmp085demo.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="bmp085recv"
+                             displayName="bmp085recv"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/bmp085recv/bmp085recv.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="button_demo"
+                             displayName="button_demo"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/button_demo/button_demo.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="combi_demo"
+                             displayName="combi_demo"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/combi_demo/combi_demo.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="dcf77demo"
+                             displayName="dcf77demo"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/dcf77demo/dcf77demo.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="dimmer_demo"
+                             displayName="dimmer_demo"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/dimmer_demo/dimmer_demo.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="eemem"
+                             displayName="eemem"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/eemem/eemem.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="expander"
+                             displayName="expander"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/expander/expander.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="gravity_demo"
+                             displayName="gravity_demo"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/gravity_demo/gravity_demo.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="h48c_demo"
+                             displayName="h48c_demo"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/h48c_demo/h48c_demo.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="heading_demo"
+                             displayName="heading_demo"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/heading_demo/heading_demo.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="hm55b_demo"
+                             displayName="hm55b_demo"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/hm55b_demo/hm55b_demo.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="input_demo"
+                             displayName="input_demo"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/input_demo/input_demo.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="isp_capture"
+                             displayName="isp_capture"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/isp_capture/isp_capture.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="isp_flash"
+                             displayName="isp_flash"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/isp_flash/isp_flash.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="isp_prepare"
+                             displayName="isp_prepare"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/isp_prepare/ATmegaBOOT_168_atmega328.hex</itemPath>
+                <itemPath>../libraries/Ports/examples/isp_prepare/Blink.cpp.hex</itemPath>
+                <itemPath>../libraries/Ports/examples/isp_prepare/RF12demo.cpp.hex</itemPath>
+                <itemPath>../libraries/Ports/examples/isp_prepare/data_blink.h</itemPath>
+                <itemPath>../libraries/Ports/examples/isp_prepare/data_rf12demo.h</itemPath>
+                <itemPath>../libraries/Ports/examples/isp_prepare/hex2c.tcl</itemPath>
+                <itemPath>../libraries/Ports/examples/isp_prepare/isp_prepare.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="isp_repair"
+                             displayName="isp_repair"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/isp_repair/isp_repair.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="lcd_demo"
+                             displayName="lcd_demo"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/lcd_demo/lcd_demo.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="lux_demo"
+                             displayName="lux_demo"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/lux_demo/lux_demo.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="memory_demo"
+                             displayName="memory_demo"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/memory_demo/memory_demo.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="nunchuk_demo"
+                             displayName="nunchuk_demo"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/nunchuk_demo/nunchuk_demo.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="output_stepper"
+                             displayName="output_stepper"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/output_stepper/output_stepper.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="pir_demo"
+                             displayName="pir_demo"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/pir_demo/pir_demo.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="powerdown_demo"
+                             displayName="powerdown_demo"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/powerdown_demo/powerdown_demo.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="qti_demo"
+                             displayName="qti_demo"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/qti_demo/qti_demo.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="recv433demo"
+                             displayName="recv433demo"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/recv433demo/recv433demo.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="relay_demo"
+                             displayName="relay_demo"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/relay_demo/relay_demo.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="rtc_demo"
+                             displayName="rtc_demo"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/rtc_demo/rtc_demo.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="sht11demo"
+                             displayName="sht11demo"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/sht11demo/sht11demo.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="SMDdemo"
+                             displayName="SMDdemo"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/SMDdemo/SMDdemo.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="snapNikon"
+                             displayName="snapNikon"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/snapNikon/snapNikon.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="thermo_demo"
+                             displayName="thermo_demo"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/thermo_demo/thermo_demo.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="tsl230demo"
+                             displayName="tsl230demo"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/tsl230demo/tsl230demo.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="uart_demo"
+                             displayName="uart_demo"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/Ports/examples/uart_demo/uart_demo.pde</itemPath>
+              </logicalFolder>
+            </logicalFolder>
+            <itemPath>../libraries/Ports/CHANGES.txt</itemPath>
+            <itemPath>../libraries/Ports/Ports.cpp</itemPath>
+            <itemPath>../libraries/Ports/Ports.h</itemPath>
+            <itemPath>../libraries/Ports/PortsBMP085.cpp</itemPath>
+            <itemPath>../libraries/Ports/PortsBMP085.h</itemPath>
+            <itemPath>../libraries/Ports/PortsLCD.cpp</itemPath>
+            <itemPath>../libraries/Ports/PortsLCD.h</itemPath>
+            <itemPath>../libraries/Ports/PortsRF12.cpp</itemPath>
+            <itemPath>../libraries/Ports/PortsSHT11.cpp</itemPath>
+            <itemPath>../libraries/Ports/PortsSHT11.h</itemPath>
+          </logicalFolder>
+          <logicalFolder name="RF12"
+                         displayName="RF12"
+                         projectFiles="true"
+                         kind="SOURCE_LOGICAL_FOLDER">
+            <logicalFolder name="examples"
+                           displayName="examples"
+                           projectFiles="true"
+                           kind="SOURCE_LOGICAL_FOLDER">
+              <logicalFolder name="crypRecv"
+                             displayName="crypRecv"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/RF12/examples/crypRecv/crypRecv.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="crypSend"
+                             displayName="crypSend"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/RF12/examples/crypSend/crypSend.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="fs20demo"
+                             displayName="fs20demo"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/RF12/examples/fs20demo/fs20demo.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="glcdNode"
+                             displayName="glcdNode"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/RF12/examples/glcdNode/glcdNode.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="kaku_demo"
+                             displayName="kaku_demo"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/RF12/examples/kaku_demo/kaku_demo.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="packetBuf"
+                             displayName="packetBuf"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/RF12/examples/packetBuf/packetBuf.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="pingPong"
+                             displayName="pingPong"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/RF12/examples/pingPong/pingPong.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="radioBlip"
+                             displayName="radioBlip"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/RF12/examples/radioBlip/radioBlip.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="RF12demo"
+                             displayName="RF12demo"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/RF12/examples/RF12demo/README</itemPath>
+                <itemPath>../libraries/RF12/examples/RF12demo/RF12demo.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="rf12serial"
+                             displayName="rf12serial"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/RF12/examples/rf12serial/rf12serial.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="rf12stream"
+                             displayName="rf12stream"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/RF12/examples/rf12stream/rf12stream.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="rgbRemote"
+                             displayName="rgbRemote"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/RF12/examples/rgbRemote/rgbRemote.pde</itemPath>
+              </logicalFolder>
+              <logicalFolder name="roomNode"
+                             displayName="roomNode"
+                             projectFiles="true"
+                             kind="SOURCE_LOGICAL_FOLDER">
+                <itemPath>../libraries/RF12/examples/roomNode/roomNode.pde</itemPath>
+              </logicalFolder>
+            </logicalFolder>
+            <itemPath>../libraries/RF12/CHANGES.txt</itemPath>
+            <itemPath>../libraries/RF12/RF12.cpp</itemPath>
+            <itemPath>../libraries/RF12/RF12.h</itemPath>
+            <itemPath>../libraries/RF12/RF12sio.cpp</itemPath>
+            <itemPath>../libraries/RF12/RF12sio.h</itemPath>
+          </logicalFolder>
+          <logicalFolder name="tempSensors"
+                         displayName="tempSensors"
+                         projectFiles="true"
+                         kind="SOURCE_LOGICAL_FOLDER">
+            <itemPath>../libraries/tempSensors/tempSensors.cpp</itemPath>
+            <itemPath>../libraries/tempSensors/tempSensors.h</itemPath>
+          </logicalFolder>
+        </logicalFolder>
+        <logicalFolder name="livingRoom"
+                       displayName="livingRoom"
+                       projectFiles="true"
+                       kind="SOURCE_LOGICAL_FOLDER">
+          <itemPath>../livingRoom/livingRoom.pde</itemPath>
+          <itemPath>makefile_1</itemPath>
+        </logicalFolder>
+        <logicalFolder name="mpptControler"
+                       displayName="mpptControler"
+                       projectFiles="true"
+                       kind="SOURCE_LOGICAL_FOLDER">
+          <itemPath>../mpptControler/ppt.pde</itemPath>
+        </logicalFolder>
+        <logicalFolder name="ookScope"
+                       displayName="ookScope"
+                       projectFiles="true"
+                       kind="SOURCE_LOGICAL_FOLDER">
+          <itemPath>../ookScope/ookScope.pde</itemPath>
+        </logicalFolder>
+        <logicalFolder name="Panels_v1"
+                       displayName="Panels_v1"
+                       projectFiles="true"
+                       kind="SOURCE_LOGICAL_FOLDER">
+          <itemPath>../Panels_v1/Panels_v1.pde</itemPath>
+        </logicalFolder>
+        <logicalFolder name="relay"
+                       displayName="relay"
+                       projectFiles="true"
+                       kind="SOURCE_LOGICAL_FOLDER">
+          <itemPath>../relay/relay.pde</itemPath>
+        </logicalFolder>
+        <logicalFolder name="remoteLcd"
+                       displayName="remoteLcd"
+                       projectFiles="true"
+                       kind="SOURCE_LOGICAL_FOLDER">
+          <itemPath>../remoteLcd/remoteLcd.pde</itemPath>
+        </logicalFolder>
+        <logicalFolder name="remoteLcdSimple"
+                       displayName="remoteLcdSimple"
+                       projectFiles="true"
+                       kind="SOURCE_LOGICAL_FOLDER">
+          <itemPath>../remoteLcdSimple/remoteLcdSimple.pde</itemPath>
+        </logicalFolder>
+        <logicalFolder name="rooms"
+                       displayName="rooms"
+                       projectFiles="true"
+                       kind="SOURCE_LOGICAL_FOLDER">
+          <itemPath>../rooms/rooms.pde</itemPath>
+        </logicalFolder>
+        <logicalFolder name="temp_ds18"
+                       displayName="temp_ds18"
+                       projectFiles="true"
+                       kind="SOURCE_LOGICAL_FOLDER">
+          <itemPath>../temp_ds18/temp_ds18.pde</itemPath>
+        </logicalFolder>
+        <logicalFolder name="Voltmeter"
+                       displayName="Voltmeter"
+                       projectFiles="true"
+                       kind="SOURCE_LOGICAL_FOLDER">
+          <itemPath>../Voltmeter/Voltmeter.pde</itemPath>
+        </logicalFolder>
+        <itemPath>../RF12.zip</itemPath>
+        <itemPath>../readme</itemPath>
+        <itemPath>../rooms.pde</itemPath>
+      </logicalFolder>
+      <itemPath>main.pde</itemPath>
+      <itemPath>makefile</itemPath>
+    </logicalFolder>
+    <logicalFolder name="ExternalFiles"
+                   displayName="Important Files"
+                   projectFiles="false">
+    </logicalFolder>
+  </logicalFolder>
+  <sourceRootList>
+    <Elem>..</Elem>
+  </sourceRootList>
+  <projectmakefile>Makefile</projectmakefile>
+  <confs>
+    <conf name="Debug" type="1">
+      <toolsSet>
+        <developmentServer>localhost</developmentServer>
+        <remote-sources-mode>LOCAL_SOURCES</remote-sources-mode>
+        <compilerSet>Arduino|Unknown</compilerSet>
+        <platform>2</platform>
+      </toolsSet>
+      <compileType>
+      </compileType>
+    </conf>
+    <conf name="Release" type="1">
+      <toolsSet>
+        <developmentServer>localhost</developmentServer>
+        <remote-sources-mode>LOCAL_SOURCES</remote-sources-mode>
+        <compilerSet>GNU|GNU</compilerSet>
+        <platform>2</platform>
+      </toolsSet>
+      <compileType>
+        <cTool>
+          <developmentMode>5</developmentMode>
+        </cTool>
+        <ccTool>
+          <developmentMode>5</developmentMode>
+        </ccTool>
+        <fortranCompilerTool>
+          <developmentMode>5</developmentMode>
+        </fortranCompilerTool>
+      </compileType>
+    </conf>
+  </confs>
+</configurationDescriptor>

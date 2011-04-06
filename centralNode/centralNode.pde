@@ -1,9 +1,12 @@
-//#include <EtherCard.h>
+#include <EtherCard.h>
 #include <Ports.h>
 #include <PortsLCD.h>
 #include <RF12.h>
 #include <payload.h>
 #include <PortsSHT11.h>
+
+#define DEBUG 1 // set to 1 to show incoming requests on serial port
+#define SMOOTH          3       // smoothing factor used for running averages
 
 SHT11 sht11 (3);
 
@@ -23,18 +26,26 @@ byte celsius[8] = {
 	B00000
 };
 
+// ethernet interface mac address
+static byte mymac[6] = { 0x54,0x55,0x58,0x10,0x00,0x26 };
+// ethernet interface ip address
+static byte myip[4] = { 192,168,1,10 };
+
+static byte buf[1000];      // tcp/ip send and receive buffer
+static BufferFiller bfill;  // used as cursor while filling the buffer
+
+// buffer for an outgoing data packet
+static byte outBuf[RF12_MAXDATA], outDest;
+static char outCount = -1;
+
+// listen port for tcp/www:
+#define HTTP_PORT 80
+#define FEED_ID 20268
+
+EtherCard eth;
+
 static byte getMotion() {
   return pir_ldr.digiRead();
-}
-
-static byte getLight() {
-  static byte avgLight;
-  pir_ldr.digiWrite2(1);  // pull-up AIO
-  byte light = pir_ldr.anaRead() >> 2;
-  pir_ldr.digiWrite2(0);  // pull-down to reduce power draw in bright light
-  // keep track of a running average for light levels
-  avgLight = (4 * avgLight + light) / 5;
-  return avgLight;
 }
 
 static MilliTimer reportTimer;  // don't report too often, unless moved
@@ -45,31 +56,40 @@ roomBoard roomData;
 casitaData casita;
 panelData panels;
 
+// this has to be added since we're using the watchdog for low-power waiting
+ISR(WDT_vect) { Sleepy::watchdogEvent(); }
+
+static int smoothedAverage(int prev, int next, byte firstTime =0) {
+    if (firstTime)
+        return next;
+    return ((SMOOTH - 1) * prev + next + SMOOTH / 2) / SMOOTH;
+}
+
 static void shtDelay () {
-  delay(32);
+    Sleepy::loseSomeTime(32); // must wait at least 20 ms
 }
 
 // this code is called once per second, but not all calls will be reported
 static void newReadings() {
-  byte motion = getMotion();  // always read out, to detect changes quickly
-  byte light = getLight();    // always read out, to keep running avg going
+//  byte motion = getMotion();  // always read out, to detect changes quickly
 
-  roomData.moved = motion != prevMotion;    
-  prevMotion = motion;
+//  roomData.moved = motion != prevMotion;    
+//  prevMotion = motion;
 
-  if (reportTimer.poll(30000) || roomData.moved) {
-    roomData.light = light;
-    float humi, temp;
-    sht11.measure(SHT11::HUMI, shtDelay);        
-    sht11.measure(SHT11::TEMP, shtDelay);
-    sht11.calculate(humi, temp);
-    // only accept values if the sensor is present
-    if (humi > 1) {
-      roomData.humi = humi + 0.5;
-      roomData.temp = 10 * temp + 0.5;
-    }
-    //        roomData.lobat = rf12_lowbat();
-  }
+  byte firstTime = roomData.humi == 0;
+  sht11.measure(SHT11::HUMI, shtDelay);        
+  sht11.measure(SHT11::TEMP, shtDelay);
+  float h, t;
+//  sht11.calculate(h, t);
+//  int humi = h + 0.5, temp = 10 * t + 0.5;
+  int humi = 50, temp = 250;
+  roomData.humi = smoothedAverage(roomData.humi, humi, firstTime);
+  roomData.temp = smoothedAverage(roomData.temp, temp, firstTime);  
+  
+//  pir_ldr.digiWrite2(1);  // enable AIO pull-up
+//  byte light = ~ pir_ldr.anaRead() >> 2;
+//  pir_ldr.digiWrite2(0);  // disable pull-up to reduce current draw
+//  roomData.light = smoothedAverage(roomData.light, light, firstTime);
 }
 
 int showHeat()
@@ -150,7 +170,6 @@ void receive () {
   // data from the casita
   if (rf12_recvDone() && rf12_crc == 0) {
     Serial.println("received packet");
-    Serial.print(RF12_HDR_MASK & rf12_hdr);
     if((RF12_HDR_MASK & rf12_hdr) == 30) { // casitadata
       casitaData* buf =  (casitaData*) rf12_data;
 
@@ -165,7 +184,7 @@ void receive () {
       casita.fpPause   = buf->fpPause;      
     } else if ((RF12_HDR_MASK & rf12_hdr) == 1) { //paneldata
       panelData* buf =  (panelData*) rf12_data;
-Serial.println("received paneldata");
+
       panels.tempOut = buf->tempOut;
       panels.tempIn  = buf->tempIn;
       panels.tempAmb = buf->tempAmb;
@@ -191,31 +210,70 @@ void setup() {
   lcd.clear();
 
   Serial.begin(57600);
-  Serial.print("\n[LivingRoom]");
+  Serial.print("\n[CentralNode]");
   rf12_config();
-  rf12_easyInit(1); // throttle packet sending to at least 1 seconds apart
+  rf12_easyInit(5); // throttle packet sending to at least 1 seconds apart
 
+//  sht11.enableCRC();
+  
   pir_ldr.mode(INPUT);
   pir_ldr.digiWrite(1);   // pull-up DIO
   pir_ldr.mode2(INPUT);
   pir_ldr.digiWrite2(1);  // pull-up AIO
 
   roomData.dTemp = 197;
+  
+  delay(1000);
+  /* init ENC28J60, must be done after SPI has been properly set up! */
+//  eth.spiInit();
+  eth.initialize(mymac);
+  eth.initIp(mymac, myip, HTTP_PORT);
+
+}
+
+char okHeader[] PROGMEM = 
+    "HTTP/1.0 200 OK\r\n"
+    "Content-Type: text/csv\n\n"
+;
+
+static void homePage(BufferFiller& buf) {
+    buf.emit_p(PSTR("$F1$D\r\n$D\r\n$D"), okHeader,
+      casita.xchangeOut, panels.tempAmb, roomData.temp);
 }
 
 boolean heater = false;
 
 void loop() {
-  receive();
-  if ( !(roomData.temp > roomData.dTemp + 1) 
-      &&
-      roomData.temp <= roomData.dTemp - 1 ) {      
-    roomData.heat = 1;
-    heater = true;
-  } else {
-    roomData.heat = 0; 
-    heater = false;
-  }
+    
+  word len = eth.packetReceive(buf, sizeof buf);
+    // ENC28J60 loop runner: handle ping and wait for a tcp packet
+  word pos = eth.packetLoop(buf,len);
+    // check if valid tcp data is received
+    if (pos) {
+        bfill = eth.tcpOffset(buf);
+        char* data = (char *) buf + pos;
+        Serial.println(data);
+        // receive buf hasn't been clobbered by reply yet
+        if (strncmp("GET / ", data, 6) == 0)
+            homePage(bfill);
+        else
+            bfill.emit_p(PSTR(
+                "HTTP/1.0 401 Unauthorized\r\n"
+                "Content-Type: text/html\r\n"
+                "\r\n"
+                "<h1>401 Unauthorized</h1>"));  
+        eth.httpServerReply(buf,bfill.position()); // send web page data
+    }
+    
+//  if ( !(roomData.temp > roomData.dTemp + 1) 
+//      &&
+//      roomData.temp <= roomData.dTemp - 1 ) {      
+//    roomData.heat = 1;
+//    heater = true;
+//  } else {
+//    roomData.heat = 0; 
+//    heater = false;
+//  }
 
   // set the cursor to column 0, line 1
   lcd.setCursor(0, 0);
@@ -233,29 +291,18 @@ void loop() {
   }
 
   secondLine();
-
+  receive();
   if (sendTimerPanel.poll(5000)) {
     newReadings();     
-    
-    Serial.print("Living ");
-    Serial.print((int) roomData.light);
-    Serial.print(' ');
-    Serial.print((int) roomData.moved);
-    Serial.print(' ');
-    Serial.print((int) roomData.humi);
-    Serial.print(' ');
-    Serial.print((int) roomData.temp);
-    Serial.print(' ');
-    Serial.println(showHeat());
-    Serial.print("panels: ");
-    Serial.println((int) panels.tempAmb);
     
     while (!rf12_canSend())
       rf12_recvDone();
     rf12_sendStart(0, &roomData, sizeof roomData);            
-    rf12_sendWait(2);
-    Serial.print(" ");
-    Serial.println(roomData.heat ? '1' : '0');
+    rf12_sendWait(1);
+    
+    
+    Serial.print("Living ");
+    Serial.println((int) panels.tempAmb);
   }
 }
 
