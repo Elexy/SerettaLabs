@@ -12,7 +12,7 @@ void setup () {
     Serial.begin(57600);
     Serial.println("\n[glcd_demo]");
     rf12_initialize(1, RF12_868MHZ);
-    rf12_sleep(0);
+    rf12_sleep(RF12_SLEEP);
     
     glcd.st7565_init();
     glcd.st7565_command(CMD_DISPLAY_ON);

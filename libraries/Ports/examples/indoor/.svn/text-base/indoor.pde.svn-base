@@ -25,7 +25,7 @@ static void shtDelay () {
 
 void setup () {
     rf12_initialize(1, RF12_868MHZ);
-    rf12_sleep(0); // power down
+    rf12_sleep(RF12_SLEEP); // power down
 
     p_sensor.getCalibData();
 

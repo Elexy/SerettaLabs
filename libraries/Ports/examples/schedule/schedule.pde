@@ -1,6 +1,6 @@
 // Demo sketch demonstrating the Scheduler class
 // 2010-10-18 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id: schedule.pde 6071 2010-10-18 23:42:19Z jcw $
+// $Id: schedule.pde 7502 2011-04-07 10:40:28Z jcw $
 
 #include <Ports.h>
 #include <RF12.h>
@@ -22,7 +22,7 @@ void setup () {
     
     // turn the radio off completely
     rf12_initialize(17, RF12_868MHZ);
-    rf12_sleep(0);
+    rf12_sleep(RF12_SLEEP);
 
     leds.ledOff(1+2);
     

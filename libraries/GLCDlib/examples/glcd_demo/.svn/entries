@@ -1,14 +1,14 @@
 10
 
 dir
-7491
+7735
 svn://svn.jeelabs.org/jeelabs/trunk/libraries/GLCDlib/examples/glcd_demo
 svn://svn.jeelabs.org
 
 
 
-2011-01-04T19:26:34.393866Z
-6564
+2011-06-01T13:21:20.788944Z
+7701
 jcw
 
 
@@ -32,10 +32,10 @@ file
 
 
 
-2011-03-16T22:03:02.841232Z
-17cb7674f765f044e0f6c2d8eb41fe1c
-2011-01-04T19:26:34.393866Z
-6564
+2011-06-27T11:01:31.222199Z
+78ca8b66c84d9ece2ad7605f7ae28cba
+2011-06-01T13:21:20.788944Z
+7701
 jcw
 has-props
 
@@ -58,5 +58,5 @@ has-props
 
 
 
-1212
+1285
 

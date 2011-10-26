@@ -17,6 +17,7 @@ GLCD_ST7565 glcd;
 
 #include <Ports.h>
 #include <RF12.h>
+#include "utility/font_clR6x8.h"
 
 static void refreshAndWait() {
     glcd.refresh();
@@ -31,6 +32,7 @@ void setup () {
 #endif    
     glcd.begin();
     glcd.backLight(255);
+    // glcd.setFont(font_clR6x8);
 }
 
 void loop () {

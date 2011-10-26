@@ -1,6 +1,6 @@
 // Ports library definitions
 // 2009-02-13 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id: Ports.cpp 7377 2011-03-21 15:08:27Z jcw $
+// $Id: Ports.cpp 7726 2011-06-14 10:18:21Z jcw $
 
 #include "Ports.h"
 #include <avr/sleep.h>
@@ -382,11 +382,11 @@ void UartPlug::write (byte data) {
     dev.stop();
 }
 
-void DimmerPlug::setReg(byte reg, byte value) const {
-    send();
-    write(reg);
-    write(value);
-    stop();
+void DimmerPlug::begin () {
+    setReg(MODE1, 0x00);     // normal
+    setReg(MODE2, 0x14);     // inverted, totem-pole
+    setReg(GRPPWM, 0xFF);    // set group dim to max brightness
+    setMulti(LEDOUT0, 0xFF, 0xFF, 0xFF, 0xFF, -1); // all LEDs group-dimmable
 }
 
 byte DimmerPlug::getReg(byte reg) const {
@@ -396,6 +396,26 @@ byte DimmerPlug::getReg(byte reg) const {
     byte result = read(1);
     stop();
     return result;
+}
+
+void DimmerPlug::setReg(byte reg, byte value) const {
+    send();
+    write(reg);
+    write(value);
+    stop();
+}
+
+void DimmerPlug::setMulti(byte reg, ...) const {
+    va_list ap;
+    va_start(ap, reg);
+    send();
+    write(0xE0 | reg); // auto-increment
+    for (;;) {
+        int v = va_arg(ap, int);
+        if (v < 0) break;
+        write(v);
+    }
+    stop();
 }
 
 void LuxPlug::setGain(byte high) {
@@ -733,8 +753,9 @@ void Sleepy::watchdogInterrupts (char mode) {
     if (mode & bit(3))
         mode ^= bit(3) | bit(WDP3);
     // pre-calculate the WDTCSR value, can't do it inside the timed sequence
+    // we only generate interrupts, no reset
     byte wdtcsr = mode >= 0 ? bit(WDIE) | mode : 0;
-    MCUSR &= ~(1<<WDRF); // only generate interrupts, no reset
+    MCUSR &= ~(1<<WDRF);
     ATOMIC_BLOCK(ATOMIC_FORCEON) {
         WDTCSR |= (1<<WDCE) | (1<<WDE); // timed sequence
         WDTCSR = wdtcsr;

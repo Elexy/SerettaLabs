@@ -1,6 +1,6 @@
 // Demo display for the Graphics Boad
 // 2010-11-14 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id: glcd_demo.pde 6206 2010-11-17 21:55:02Z jcw $
+// $Id: glcd_demo.pde 7502 2011-04-07 10:40:28Z jcw $
 
 #include "ST7565.h"
 #include <Ports.h>
@@ -12,7 +12,7 @@ void setup () {
     Serial.begin(57600);
     Serial.println("\n[glcd_demo]");
     rf12_initialize(1, RF12_868MHZ);
-    rf12_sleep(0);
+    rf12_sleep(RF12_SLEEP);
     
     glcd.st7565_init();
     glcd.st7565_command(CMD_DISPLAY_ON);

@@ -1,5 +1,5 @@
 // Grpahics library for 128x64 display based on ST7565 (JeeLabs Graphics Board)
-// $Id: GLCD_ST7565.h 6780 2011-01-22 20:49:36Z jcw $
+// $Id: GLCD_ST7565.h 7701 2011-06-01 13:21:20Z jcw $
 //
 // Originally derived from code by cstone@pobox.com and Limor Fried / Adafruit.
 // Massive changes by Steve Evans and Jean-Claude Wippler, see GLCD_ST7565.cpp
@@ -27,15 +27,16 @@ public:
     static void clear();
     static void refresh();
 
+    static byte setFont (const byte* font);
     static void setPixel   (byte x , byte y   , byte color);
     static void fillCircle (byte x0, byte y0  , byte r , byte color);
     static void drawCircle (byte x0, byte y0  , byte r , byte color);
     static void drawRect   (byte x , byte y   , byte w , byte h , byte color);
     static void fillRect   (byte x , byte y   , byte w , byte h , byte color);
     static void drawLine   (byte x0, byte y0  , byte x1, byte y1, byte color);
-    static void drawChar   (byte x , byte y, char c );
-    static void drawString (byte x , byte y, const char *c);
-    static void drawString_P (byte x, byte y, const char *c);
+    static byte drawChar   (byte x , byte y, char c);
+    static byte drawString (byte x , byte y, const char *c);
+    static byte drawString_P (byte x, byte y, const char *c);
     static void drawTriangle (byte x0, byte y0, byte x1, byte y1, byte x2, byte y2, byte color);
     static void fillTriangle (byte x0, byte y0, byte x1, byte y1, byte x2, byte y2, byte color);
     static void drawBitmap (byte x, byte y, const byte *bitmap, byte w, byte h, byte color);

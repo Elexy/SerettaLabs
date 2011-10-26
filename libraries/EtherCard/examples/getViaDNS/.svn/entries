@@ -1,14 +1,14 @@
 10
 
 dir
-7491
+7735
 svn://svn.jeelabs.org/jeelabs/trunk/libraries/EtherCard/examples/getViaDNS
 svn://svn.jeelabs.org
 
 
 
-2010-11-27T14:08:24.266033Z
-6260
+2011-06-15T08:29:21.939419Z
+7727
 jcw
 
 
@@ -32,10 +32,10 @@ file
 
 
 
-2011-03-16T22:03:29.105232Z
-fed960d1b5972ab185243db408e6da86
-2010-11-27T14:08:24.266033Z
-6260
+2011-06-27T11:01:32.842207Z
+ad6dea0d3e6dee0c156681f44f62c57a
+2011-06-15T08:29:21.939419Z
+7727
 jcw
 has-props
 
@@ -58,5 +58,5 @@ has-props
 
 
 
-1663
+1597
 

@@ -1,52 +1,44 @@
 // This is a demo of the RBBB running as webserver with the Ether Card
 // 2010-05-28 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id: rbbb_server.pde 5771 2010-05-30 18:41:38Z jcw $
+// $Id: rbbb_server.pde 7725 2011-06-13 14:07:56Z jcw $
 
 #include <EtherCard.h>
 
-// ethernet interface mac address
-static byte mymac[6] = { 0x54,0x55,0x58,0x10,0x00,0x26 };
+// ethernet interface mac address, must be unique on the LAN
+static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
+static byte myip[] = { 192,168,1,203 };
 
-// ethernet interface ip address
-static byte myip[4] = { 192,168,178,203 };
-
-// listen port for tcp/www:
-#define HTTP_PORT 80
-
-static byte buf[500];
-static BufferFiller bfill;
-
-EtherCard eth;
+byte Ethernet::buffer[500];
+BufferFiller bfill;
 
 void setup () {
-    eth.spiInit();
-    eth.initialize(mymac);
-    eth.initIp(mymac, myip, HTTP_PORT);
+  if (ether.begin(sizeof Ethernet::buffer, mymac) == 0)
+    Serial.println( "Failed to access Ethernet controller");
+  ether.staticSetup(myip);
 }
 
-static void homePage() {
-    long t = millis() / 1000;
-    word h = t / 3600;
-    byte m = (t / 60) % 60;
-    byte s = t % 60;
-    bfill.emit_p(PSTR(
-        "HTTP/1.0 200 OK\r\n"
-        "Content-Type: text/html\r\n"
-        "Pragma: no-cache\r\n"
-        "\r\n"
-        "<meta http-equiv='refresh' content='1'/>"
-        "<title>RBBB server</title>" 
-        "<h1>$D$D:$D$D:$D$D</h1>"), h/10, h%10, m/10, m%10, s/10, s%10);
+static word homePage() {
+  long t = millis() / 1000;
+  word h = t / 3600;
+  byte m = (t / 60) % 60;
+  byte s = t % 60;
+  bfill = ether.tcpOffset();
+  bfill.emit_p(PSTR(
+    "HTTP/1.0 200 OK\r\n"
+    "Content-Type: text/html\r\n"
+    "Pragma: no-cache\r\n"
+    "\r\n"
+    "<meta http-equiv='refresh' content='1'/>"
+    "<title>RBBB server</title>" 
+    "<h1>$D$D:$D$D:$D$D</h1>"),
+      h/10, h%10, m/10, m%10, s/10, s%10);
+  return bfill.position();
 }
 
 void loop () {
-    word len = eth.packetReceive(buf, sizeof buf);
-    // ENC28J60 loop runner: handle ping and wait for a tcp packet
-    word pos = eth.packetLoop(buf,len);
-    // check if valid tcp data is received
-    if (pos) {
-        bfill = eth.tcpOffset(buf);
-        homePage();
-        eth.httpServerReply(buf,bfill.position()); // send web page data
-    }
+  word len = ether.packetReceive();
+  word pos = ether.packetLoop(len);
+  
+  if (pos)  // check if valid tcp data is received
+    ether.httpServerReply(homePage()); // send web page data
 }

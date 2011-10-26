@@ -29,6 +29,6 @@ void loop () {
     // need to wait after changing the gain
     //  see http://talk.jeelabs.net/topic/608
     highGain = ! highGain;
-    sensor.setGain(setGain);
+    sensor.setGain(highGain);
     delay(1000);
 }

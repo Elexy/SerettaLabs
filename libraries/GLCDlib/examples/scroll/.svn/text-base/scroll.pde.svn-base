@@ -4,6 +4,7 @@
 #include <GLCD_ST7565.h>
 #include <Ports.h>
 #include <RF12.h> // needed to avoid a linker error :(
+#include "utility/font_clR6x8.h"
 
 GLCD_ST7565 glcd;
 
@@ -13,6 +14,7 @@ byte x = 0;
 void setup () {
     glcd.begin();
     glcd.backLight(255);
+    glcd.setFont(font_clR6x8);
     glcd.refresh();
 }
 

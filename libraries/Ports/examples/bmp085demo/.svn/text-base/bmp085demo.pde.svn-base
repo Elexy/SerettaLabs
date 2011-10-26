@@ -76,7 +76,7 @@ void setup() {
 void loop() {
     // spend most of the waiting time in a low-power sleep mode
     // note: the node's sense of time is no longer 100% accurate after sleeping
-    rf12_sleep(0);                   // turn the radio off
+    rf12_sleep(RF12_SLEEP);          // turn the radio off
     loseSomeTime(timer.remaining()); // go into a (controlled) comatose state
     
     while (!timer.poll(1000))
@@ -107,7 +107,7 @@ void loop() {
     Serial.print(' ');
     Serial.print(payload.pres);
     
-    rf12_sleep(-1);                  // turn radio back on at the last moment
+    rf12_sleep(RF12_WAKEUP);         // turn radio back on at the last moment
     
     MilliTimer wait;                 // radio needs some time to power up, why?
     while (!wait.poll(5)) {

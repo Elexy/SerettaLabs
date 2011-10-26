@@ -1,6 +1,6 @@
 // Configure some values in EEPROM for easy config of the RF12 later on.
 // 2009-05-06 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id: RF12demo.pde 7450 2011-04-02 01:12:55Z jcw $
+// $Id: RF12demo.pde 7734 2011-06-22 01:56:23Z jcw $
 
 // this version adds flash memory support, 2009-11-19
 
@@ -12,9 +12,9 @@
 #include <avr/pgmspace.h>
 
 #define DATAFLASH   1   // check for presence of DataFlash memory on JeeLink
-#define FLASH_MBIT  8   // support for various dataflash sizes: 4/8/16 Mbit
+#define FLASH_MBIT  16  // support for various dataflash sizes: 4/8/16 Mbit
 
-#define LED_PIN     9   // activity LED
+#define LED_PIN     9   // activity LED, comment out to disable
 
 #define COLLECT 0x20 // collect mode, i.e. pass incoming without sending acks
 
@@ -24,8 +24,10 @@ static unsigned long now () {
 }
 
 static void activityLed (byte on) {
+#ifdef LED_PIN
     pinMode(LED_PIN, OUTPUT);
     digitalWrite(LED_PIN, !on);
+#endif
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -169,7 +171,7 @@ static void kakuSend(char addr, byte device, byte on) {
 #endif
 
 #if FLASH_MBIT == 16
-// settings for 2 Mbyte flash in JLv2
+// settings for 2 Mbyte flash in JLv3
 #define DF_BLOCK_SIZE   256         // number of pages erased at same time
 #define DF_LOG_BEGIN    512         // first 2 blocks reserved for future use
 #define DF_LOG_LIMIT    0x1F00      // last 64k is not used for logging

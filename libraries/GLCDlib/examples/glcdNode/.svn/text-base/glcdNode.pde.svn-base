@@ -8,6 +8,7 @@
 #include <GLCD_ST7565.h>
 #include <Ports.h>
 #include <RF12.h>
+#include "utility/font_clR6x6.h"
 
 class GraphicsBoard : public GLCD_ST7565, public Print {
     byte x, y, dirty;
@@ -15,10 +16,10 @@ class GraphicsBoard : public GLCD_ST7565, public Print {
     
     void newline() {
         x = 0;
-        if (y >= 56)
-            scroll(SCROLLUP, 8);
+        if (y >= 58)
+            scroll(SCROLLUP, 6);
         else
-            y += 8;
+            y += 6;
     }
     
 public:
@@ -66,6 +67,7 @@ void setup () {
     rf12_initialize(1, RF12_868MHZ, 5);
     glcd.begin();
     glcd.backLight(255);
+    glcd.setFont(font_clR6x6);
     glcd.println(" <<< glcdNode.pde >>>");
 }
 

@@ -1,11 +1,10 @@
 Jm doc "Decoder for the radioBlip sketch."
 
-proc RF12.DECODE {name raw} {
-  set count [RF12demo bitSlicer $raw 32]
-  Ju tag $name blip $count days [expr {$count/(86400/64)}] report {
-    # Value ping "counter" {$blip} counts
-    Value age "age" {$days} days
-  }
+proc process {device data} {
+  dict extract $data raw
+  set blip [bitSlicer $raw 32]
+  report $data ping $blip -unit counts
+  report $data age [expr {$blip/(86400/64)}] -unit days
 }
 
-Jm rev {$Id: radioBlip.tcl 7372 2011-03-18 10:09:52Z jcw $}
+Jm rev {$Id: radioBlip.tcl 7623 2011-04-27 00:52:48Z jcw $}

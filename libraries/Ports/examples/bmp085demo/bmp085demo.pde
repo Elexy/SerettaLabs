@@ -1,6 +1,6 @@
 // Ports demo, reads out a BMP085 sensor connected via I2C
 // 2009-02-17 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id: bmp085demo.pde 5909 2010-08-15 23:20:56Z jcw $
+// $Id: bmp085demo.pde 7502 2011-04-07 10:40:28Z jcw $
 
 // 2010-05-22: added support for all resolution modes
 // 2010-05-25: extended to also broadcast all readings over wireless
@@ -76,7 +76,7 @@ void setup() {
 void loop() {
     // spend most of the waiting time in a low-power sleep mode
     // note: the node's sense of time is no longer 100% accurate after sleeping
-    rf12_sleep(0);                   // turn the radio off
+    rf12_sleep(RF12_SLEEP);          // turn the radio off
     loseSomeTime(timer.remaining()); // go into a (controlled) comatose state
     
     while (!timer.poll(1000))
@@ -107,7 +107,7 @@ void loop() {
     Serial.print(' ');
     Serial.print(payload.pres);
     
-    rf12_sleep(-1);                  // turn radio back on at the last moment
+    rf12_sleep(RF12_WAKEUP);         // turn radio back on at the last moment
     
     MilliTimer wait;                 // radio needs some time to power up, why?
     while (!wait.poll(5)) {

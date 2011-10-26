@@ -6,6 +6,8 @@
 # Examples:
 #   ./hex2c.tcl Blink.cpp.hex ATmegaBOOT_168_atmega328.hex >data_blink.h
 #   ./hex2c.tcl RF12demo.cpp.hex ATmegaBOOT_168_atmega328.hex >data_rf12demo.h
+#   ./hex2c.tcl Blink.cpp.hex optiboot_atmega328.hex >opti_blink.h
+#   ./hex2c.tcl RF12demo.cpp.hex optiboot_atmega328.hex >opti_rf12demo.h
 
 if {$argv eq ""} {
   puts stderr "Usage: [info script] infile.hex ?...? >outfile.h"

@@ -1,14 +1,14 @@
 10
 
 dir
-7491
+7735
 svn://svn.jeelabs.org/jeelabs/trunk/libraries/Ports/examples/indoor
 svn://svn.jeelabs.org
 
 
 
-2010-11-25T23:26:15.802010Z
-6249
+2011-04-07T10:40:28.525123Z
+7502
 jcw
 
 
@@ -32,10 +32,10 @@ file
 
 
 
-2011-03-16T22:03:46.061232Z
-78cbf262f24be25a26a07b13c72faaa6
-2010-11-25T23:26:15.802010Z
-6249
+2011-06-27T11:01:33.418209Z
+5c577641761dccce83ca2513dbe3e08a
+2011-04-07T10:40:28.525123Z
+7502
 jcw
 has-props
 
@@ -58,5 +58,5 @@ has-props
 
 
 
-2468
+2477
 

@@ -3,25 +3,55 @@
 // jcw, 2010-04-18
 // $Id$
 
+// see http://jeelabs.org/tag/isp/ for related weblog posts
+// and http://jeelabs.org/2011/05/29/summary-of-isp-options/
+
 // Boot Cloner
 // adapted from http://www.arduino.cc/playground/BootCloner/BootCloner
 // original copyright notice: 2007 by Amplificar <mailto:amplificar@gmail.com>
 
 #include <avr/pgmspace.h>
 
-// MPU-specific values
+// select the proper configuration with these three settings:
 
-#define PAGE_BYTES 128  // ATmega168 and ATmega328
+#define USE_OPTI_BOOT   1   // boot loader: OptiBoot = 1, Duemilanove = 0
+#define USE_RF12DEMO    1   // sketch: RF12demo = 1, Blink = 0
+#define USE_FAST_WAKEUP 1   // clock: resonator = 1, crystal (std) = 0
+
+// MPU-specific values, properly adjusted for ATmega168 and ATmega328
+
+#define PAGE_BYTES      128
 #define LOCK_BITS       0x3F
-#define FUSE_LOW        0xFF
-#define FUSE_HIGH       0xDA
 #define FUSE_EXTENDED   0x05
 
+#if USE_FAST_WAKEUP
+  #define FUSE_LOW      0xDE  // start in 258/14 CK + 65 ms
+#else                   
+  #define FUSE_LOW      0xFF  // start in 16K/14 CK + 65 ms
+#endif                  
+
+#if USE_OPTI_BOOT       
+  #define FUSE_HIGH     0xDE  // 512 bytes for boot loader
+#else                   
+  #define FUSE_HIGH     0xDA  // 2048 bytes for boot loader
+#endif
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Change this as needed to include the proper dataset for programming:
-// #include "data_blink.h"
-#include "data_rf12demo.h"
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Selects appropriate data file, depending on USE_OPTI_BOOT and USE_RF12DEMO
+
+#if USE_OPTI_BOOT
+  #if USE_RF12DEMO
+    #include "opti_rf12demo.h"
+  #else
+    #include "opti_blink.h"
+  #endif
+#else
+  #if USE_RF12DEMO
+    #include "data_rf12demo.h"
+  #else
+    #include "data_blink.h"
+  #endif
+#endif
 
 // pin definitions
 #define SCK         14   // AIO1 - serial clock to target avr
@@ -101,7 +131,7 @@ static void Read_Signature() {
 }
 
 // prints the lock and fuse bits (no leading zeros)
-static void Read_Fuse() {
+static void Read_Fuses() {
     Serial.print("Lock Bits: ");
     Serial.println(Send_ISP(CMD_Read_Lock), HEX);
     Serial.print("Fuses: low ");
@@ -204,15 +234,15 @@ void loop () {
     delay(100);
     
     if (EnableProgramming()) {
-        Serial.println("Setting Fuses");
-        Send_ISP_wait(CMD_Write_Fuse_Low, 0, FUSE_LOW);
-        Send_ISP_wait(CMD_Write_Fuse_High, 0, FUSE_HIGH);
-        Send_ISP_wait(CMD_Write_Fuse_Extended, 0, FUSE_EXTENDED);
-        Send_ISP_wait(CMD_Write_Lock, 0, LOCK_BITS);
-    
+        Serial.println("Erasing Flash");
+        Send_ISP_wait(CMD_Erase_Flash, 0x22, 0x22);
+
         if (EnableProgramming()) {
-            Serial.println("Erasing Flash");
-            Send_ISP_wait(CMD_Erase_Flash, 0x22, 0x22);
+            Serial.println("Setting Fuses");
+            Send_ISP_wait(CMD_Write_Fuse_Low, 0, FUSE_LOW);
+            Send_ISP_wait(CMD_Write_Fuse_High, 0, FUSE_HIGH);
+            Send_ISP_wait(CMD_Write_Fuse_Extended, 0, FUSE_EXTENDED);
+            Send_ISP_wait(CMD_Write_Lock, 0, LOCK_BITS);
     
             byte ok = 1;
             for (byte i = 0; i < sizeof sections / sizeof sections[0]; ++i) {
@@ -225,7 +255,7 @@ void loop () {
                     ok = 0;
             }
             if (ok) {
-                Read_Fuse();
+                Read_Fuses();
                 Read_Signature();
                 Serial.println("Done.");    
                 return;

@@ -1,4 +1,4 @@
-// Arduino demo sketch for testing RFM12B + ENC28J60 ethernet
+// Arduino demo sketch for testing RFM12B + ethernet
 // Listens for RF12 messages and displays valid messages on a webpage
 // Memory usage exceeds 1K, so use Atmega328 or decrease history/buffers
 //
@@ -14,7 +14,8 @@
 #include <RF12.h>
 #include <avr/eeprom.h>
 
-#define DEBUG 1 // set to 1 to show incoming requests on serial port
+#define DEBUG   1   // set to 1 to display free RAM on web page
+#define SERIAL  0   // set to 1 to show incoming requests on serial port
 
 #define CONFIG_EEPROM_ADDR ((byte*) 0x10)
 
@@ -28,25 +29,15 @@ struct Config {
 } config;
 
 // ethernet interface mac address - must be unique on your network
-static byte mymac[6] = { 0x54,0x55,0x58,0x10,0x00,0x26 };
-
-// ethernet interface static IP address - CHANGE THIS to match your network!
-static byte myip[4] = { 192,168,178,203 };
+static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
 
 // buffer for an outgoing data packet
 static byte outBuf[RF12_MAXDATA], outDest;
 static char outCount = -1;
 
-// listen port for tcp/www:
-#define HTTP_PORT 80
-
-// fixed RF12 settings
-#define MYNODE 31
-
 #define NUM_MESSAGES  10    // Number of messages saved in history
 #define MESSAGE_TRUNC 15    // Truncate message payload to reduce memory use
 
-static byte buf[1000];      // tcp/ip send and receive buffer
 static BufferFiller bfill;  // used as cursor while filling the buffer
 
 static byte history_rcvd[NUM_MESSAGES][MESSAGE_TRUNC+1]; //history record
@@ -54,7 +45,7 @@ static byte history_len[NUM_MESSAGES]; // # of RF12 messages+header in history
 static byte next_msg;       // pointer to next rf12rcvd line
 static word msgs_rcvd;      // total number of lines received modulo 10,000
 
-EtherCard eth;
+byte Ethernet::buffer[1000];   // tcp/ip send and receive buffer
 
 static void loadConfig() {
     for (byte i = 0; i < sizeof config; ++i)
@@ -69,7 +60,7 @@ static void loadConfig() {
     byte freq = config.band == 4 ? RF12_433MHZ :
                 config.band == 8 ? RF12_868MHZ :
                                    RF12_915MHZ;
-    rf12_initialize(MYNODE, freq, config.group);
+    rf12_initialize(31, freq, config.group);
 }
 
 static void saveConfig() {
@@ -77,15 +68,28 @@ static void saveConfig() {
         eeprom_write_byte(CONFIG_EEPROM_ADDR + i, ((byte*) &config)[i]);
 }
 
-void setup(){
 #if DEBUG
+static int freeRam () {
+  extern int __heap_start, *__brkval; 
+  int v; 
+  return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval); 
+}
+#endif
+
+void setup(){
+#if SERIAL
     Serial.begin(57600);
     Serial.println("\n[etherNode]");
 #endif
     loadConfig();
-    /* init ENC28J60, must be done after SPI has been properly set up! */
-    eth.initialize(mymac);
-    eth.initIp(mymac, myip, HTTP_PORT);
+    
+    if (ether.begin(sizeof Ethernet::buffer, mymac) == 0) 
+      Serial.println( "Failed to access Ethernet controller");
+    if (!ether.dhcpSetup())
+      Serial.println("DHCP failed");
+#if SERIAL
+    ether.printIp("IP: ", ether.myip);
+#endif
 }
 
 char okHeader[] PROGMEM = 
@@ -121,11 +125,14 @@ static void homePage(BufferFiller& buf) {
     buf.emit_p(PSTR(
         "</pre>"
         "Uptime is $D$D:$D$D:$D$D"), h/10, h%10, m/10, m%10, s/10, s%10);
+#if DEBUG
+    buf.emit_p(PSTR(" ($D bytes free)"), freeRam());
+#endif
 }
 
 static int getIntArg(const char* data, const char* key, int value =-1) {
     char temp[10];
-    if (find_key_val(data + 7, temp, sizeof temp, key) > 0)
+    if (ether.findKeyVal(data + 7, temp, sizeof temp, key) > 0)
         value = atoi(temp);
     return value;
 }
@@ -189,7 +196,7 @@ static void sendPage(const char* data, BufferFiller& buf) {
                 outBuf[outCount] = 10 * outBuf[outCount] + (*p - '0');
             ++outCount;
         }
-#if DEBUG
+#if SERIAL
         Serial.print("Send to ");
         Serial.print(outDest, DEC);
         Serial.print(':');
@@ -220,14 +227,13 @@ static void sendPage(const char* data, BufferFiller& buf) {
 }
 
 void loop(){
-    word len = eth.packetReceive(buf, sizeof buf);
-    // ENC28J60 loop runner: handle ping and wait for a tcp packet
-    word pos = eth.packetLoop(buf,len);
+    word len = ether.packetReceive();
+    word pos = ether.packetLoop(len);
     // check if valid tcp data is received
     if (pos) {
-        bfill = eth.tcpOffset(buf);
-        char* data = (char *) buf + pos;
-#if DEBUG
+        bfill = ether.tcpOffset();
+        char* data = (char *) Ethernet::buffer + pos;
+#if SERIAL
         Serial.println(data);
 #endif
         // receive buf hasn't been clobbered by reply yet
@@ -243,7 +249,7 @@ void loop(){
                 "Content-Type: text/html\r\n"
                 "\r\n"
                 "<h1>401 Unauthorized</h1>"));  
-        eth.httpServerReply(buf,bfill.position()); // send web page data
+        ether.httpServerReply(bfill.position()); // send web page data
     }
 
     // RFM12 loop runner, don't report acks
@@ -258,7 +264,9 @@ void loop(){
         msgs_rcvd = (msgs_rcvd + 1) % 10000;
 
         if (RF12_WANTS_ACK && !config.collect) {
+#if SERIAL
             Serial.println(" -> ack");
+#endif
             rf12_sendStart(RF12_ACK_REPLY, 0, 0);
         }
     }

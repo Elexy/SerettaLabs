@@ -1,6 +1,6 @@
 // New version of the Room Node, derived from rooms.pde
 // 2010-10-19 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id: roomNode.pde 7201 2011-02-26 16:10:57Z jcw $
+// $Id: roomNode.pde 7503 2011-04-07 10:41:06Z jcw $
 
 // see http://jeelabs.org/2010/10/20/new-roomnode-code/
 // and http://jeelabs.org/2010/10/21/reporting-motion/
@@ -177,11 +177,11 @@ static void doMeasure() {
 
 // periodic report, i.e. send out a packet and optionally report on serial port
 static void doReport() {
-    rf12_sleep(-1);
+    rf12_sleep(RF12_WAKEUP);
     while (!rf12_canSend())
         rf12_recvDone();
     rf12_sendStart(0, &payload, sizeof payload, RADIO_SYNC_MODE);
-    rf12_sleep(0);
+    rf12_sleep(RF12_SLEEP);
 
     #if SERIAL
         Serial.print("ROOM ");
@@ -208,12 +208,12 @@ static void doTrigger() {
     #endif
 
     for (byte i = 0; i < RETRY_LIMIT; ++i) {
-        rf12_sleep(-1);
+        rf12_sleep(RF12_WAKEUP);
         while (!rf12_canSend())
             rf12_recvDone();
         rf12_sendStart(RF12_HDR_ACK, &payload, sizeof payload, RADIO_SYNC_MODE);
         byte acked = waitForAck();
-        rf12_sleep(0);
+        rf12_sleep(RF12_SLEEP);
 
         if (acked) {
             #if DEBUG
@@ -244,7 +244,7 @@ void setup () {
         myNodeID = rf12_config(0); // don't report info on the serial port
     #endif
     
-    rf12_sleep(0); // power down
+    rf12_sleep(RF12_SLEEP); // power down
     
     #if PIR_PORT
         pir.digiWrite(PIR_PULLUP);

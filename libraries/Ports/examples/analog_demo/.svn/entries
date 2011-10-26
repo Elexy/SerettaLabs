@@ -1,14 +1,14 @@
 10
 
 dir
-7491
+7735
 svn://svn.jeelabs.org/jeelabs/trunk/libraries/Ports/examples/analog_demo
 svn://svn.jeelabs.org
 
 
 
-2010-11-09T00:32:24.258890Z
-6163
+2011-04-27T23:05:26.206006Z
+7637
 jcw
 
 
@@ -25,6 +25,40 @@ jcw
 
 
 9e558909-932a-0410-a563-af77432da1eb
+
+analog_demo.tcl
+file
+
+
+
+
+2011-06-27T11:01:33.694211Z
+1b65303a346a1615f569153b50a28836
+2011-04-27T23:05:26.206006Z
+7637
+jcw
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+857
 
 analog_demo.pde
 file

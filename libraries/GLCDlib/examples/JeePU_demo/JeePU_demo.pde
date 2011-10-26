@@ -1,5 +1,5 @@
 // JeePU client example.
-// $Id: JeePU_demo.pde 6563 2011-01-04 17:05:46Z jcw $
+// $Id: JeePU_demo.pde 7701 2011-06-01 13:21:20Z jcw $
 
 #define REMOTE 1    // set to 0 to use this sketch with a locally attached GLCD
 
@@ -17,6 +17,7 @@ GLCD_ST7565 glcd;
 
 #include <Ports.h>
 #include <RF12.h>
+#include "utility/font_clR6x8.h"
 
 static void refreshAndWait() {
     glcd.refresh();
@@ -31,6 +32,7 @@ void setup () {
 #endif    
     glcd.begin();
     glcd.backLight(255);
+    // glcd.setFont(font_clR6x8);
 }
 
 void loop () {

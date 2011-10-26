@@ -7,9 +7,12 @@
 
 #include <Ports.h>
 #include <RF12.h> // needed to avoid a linker error :(
+#include <payload.h> // contains all the message structs
 
-PortI2C myport (1 /*, PortI2C::KHZ400 */);
+PortI2C myport (2 /*, PortI2C::KHZ400 */);
 DeviceI2C rtc (myport, 0x68);
+
+//timeSignal now;
 
 static byte bin2bcd (byte val) {
     return val + 6 * (val / 10);
@@ -54,7 +57,9 @@ void setup() {
     Serial.println("\n[rtc_demo]");
 
     // test code:
-    setDate(11, 02, 19, 16, 32, 20);
+//    setDate(11, 8, 29, 14, 27, 20);
+    rf12_config();
+    rf12_easyInit(5); // throttle packet sending to at least 5 seconds apart
 }
 
 void loop() {    
@@ -65,8 +70,14 @@ void loop() {
     for (byte i = 0; i < 6; ++i) {
         Serial.print(' ');
         Serial.print((int) now[i]);
+        
     }
+    while (!rf12_canSend())
+      rf12_recvDone();    
+    rf12_sendStart(1, &now, sizeof now);
+    rf12_sendWait(2);
+    
     Serial.println();
         
-	delay(1000);
+	delay(5000);
 }

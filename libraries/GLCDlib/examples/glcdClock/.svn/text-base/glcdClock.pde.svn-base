@@ -28,11 +28,7 @@ static void twoDigits(byte x, byte v) {
 }
 
 void setup () {
-    // Serial.begin(57600);
-    // Serial.println("\n[glcdClock]");
-    
-    rtc.begin(DateTime (__DATE__, __TIME__));
-    
+    rtc.begin(DateTime (__DATE__, __TIME__));    
     glcd.begin();
     glcd.backLight(255);
 }

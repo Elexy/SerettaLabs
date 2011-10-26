@@ -4,14 +4,9 @@
 #include <EtherCard.h>
 
 // ethernet mac address - must be unique on your network
-static byte mymac[6] = { 0x54,0x55,0x58,0x10,0x00,0x26 };
-// ethernet interface static IP address
-static byte myip[4] = { 192,168,178,203 };
+static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
 
-static byte buf[1000]; // tcp/ip send and receive buffer
-
-EtherCard eth;
-BufferFiller bfill;
+byte Ethernet::buffer[500]; // tcp/ip send and receive buffer
 
 char page[] PROGMEM =
 "HTTP/1.0 503 Service Unavailable\r\n"
@@ -28,24 +23,19 @@ char page[] PROGMEM =
       "The main server is currently off-line.<br />"
       "Please try again later."
     "</em></p>"
-    "<p>-jcw</p>"
   "</body>"
 "</html>"
 ;
 
 void setup(){
-    eth.spiInit();
-    eth.initialize(mymac);
-    eth.initIp(mymac, myip, 80); // HTTP port
+  ether.begin(sizeof Ethernet::buffer, mymac);
+  ether.dhcpSetup();
 }
 
 void loop(){
-    word len = eth.packetReceive(buf, sizeof buf);
-    word pos = eth.packetLoop(buf, len);
-    
-    if (pos) {
-        bfill = eth.tcpOffset(buf);
-        bfill.emit_p(page);
-        eth.httpServerReply(buf, bfill.position());
-    }
+  // wait for an incoming TCP packet, but ignore its contents
+  if (ether.packetLoop(ether.packetReceive())) {
+    memcpy_P(ether.tcpOffset(), page, sizeof page);
+    ether.httpServerReply(sizeof page - 1);
+  }
 }

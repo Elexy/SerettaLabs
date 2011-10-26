@@ -1,15 +1,15 @@
 10
 
 dir
-7491
+7735
 svn://svn.jeelabs.org/jeelabs/trunk/libraries/GLCDlib/examples
 svn://svn.jeelabs.org
 
 
 
-2011-01-18T15:01:38.298570Z
-6659
-sevans
+2011-06-05T22:48:08.295721Z
+7709
+jcw
 
 
 
@@ -36,6 +36,9 @@ glcdClock
 dir
 
 JeePU
+dir
+
+font_demo
 dir
 
 JeePU_demo

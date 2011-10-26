@@ -1,8 +1,9 @@
 #include <RF12.h>
 #include <Ports.h> //needed to avoid linker error
+#include <payload.h> // all the payloads centralized
 
 Port voltage (3);
-Port dumpLoad (3);
+Port dumpLoad (3); // relay with unpowered = dump ON
 
 byte seqnum;
 
@@ -10,14 +11,15 @@ static int supplyVoltage() {return map(voltage.anaRead(), 0, 1023, 0, 4000); }
 static int supplyReading() { return voltage.anaRead(); }
 
 const int numReadings = 10; // size of readings array
-const int interval = 10;    // interval to update display
+const int interval = 25;    // interval to update display
 
 int readings[numReadings];  // the reading from the analog input
 int index = 0;              // the index of the current reading
 int total = 0;              // the running total
 int average = 0;            // the average
 int updCounter = 0;         // counter for display updates
-
+windControl payload;        // struct type windControl
+double switchTimer = 0;     // to time switches at least 10 seconda apart
 
 void setup () {
   rf12_config();
@@ -33,10 +35,16 @@ void setup () {
   
   
   // initialize all readings to 0
-  for (int thisReading = 0; thisReading < numReadings; thisReading++)
-    readings[thisReading] = 0;
-    
-//  rf12_easyInit(5);  
+  for (int thisReading = 0; thisReading < numReadings; thisReading++) readings[thisReading] = 0;
+}
+
+void dumpSwitch(boolean state) {
+  if(millis() >= switchTimer + 10000 || switchTimer == 0) {
+    dumpLoad.digiWrite(state ? 1 : 0 );
+    payload.dump=state ? 1 : 0;
+    switchTimer = millis();
+    Serial.println("time to switch");
+  }
 }
 
 void loop () {
@@ -55,35 +63,32 @@ void loop () {
     
   //calculate the average
   average = total / numReadings;  
+  payload.volts = average;
   
-  if(supplyVoltage() > 2760) {
-    dumpLoad.digiWrite(0); // at voltages over 27.6 switch to dumpload
-    Serial.println("relay:off");
+  if(supplyVoltage() > 2780) {
+    dumpSwitch(false); // at voltages over 27.6 switch to dumpload
   } else {
-    dumpLoad.digiWrite(1); // at voltages under 27.6 switch to battery charging
-    Serial.println("relay:on");
+    dumpSwitch(true); // at voltages under 27.6 switch to battery charging
   }
   
   if(updCounter == interval )
   {
+    Serial.print("relay: ");
+    Serial.println(payload.dump ? 'on' : 'off');
     Serial.print("Power R: ");
     Serial.print(supplyReading());
     Serial.print(" V: ");
     Serial.print(supplyVoltage());
     Serial.print(" average: ");
     Serial.println(average, DEC);
-
+//    Serial.println(switchTimer+10000);
+//    Serial.println(millis());
+    while (!rf12_canSend())
+      rf12_recvDone();     
+    rf12_sendStart(0, &payload, sizeof payload);
+    rf12_sendWait(2);
     updCounter = 0; //reset counter
   }
-  
-  updCounter++; //increment counter
-  
-//  rf12_easyPoll();
-//  rf12_easySend(&v, sizeof v);
-  
   delay(100);
-  
-  while (!rf12_canSend())
-    rf12_recvDone();     
-  rf12_sendStart(0, &payloadData, sizeof payloadData);
+  updCounter++; //increment counter
 }

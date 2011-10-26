@@ -1,6 +1,6 @@
 // Demo of the Lux Plug, based on the LuxPlug class in the Ports library
 // 2010-03-18 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id: lux_demo.pde 6540 2010-12-24 14:41:03Z jcw $
+// $Id: lux_demo.pde 7689 2011-05-24 14:22:35Z jcw $
 
 #include <Ports.h>
 #include <RF12.h> // needed to avoid a linker error :(
@@ -29,6 +29,6 @@ void loop () {
     // need to wait after changing the gain
     //  see http://talk.jeelabs.net/topic/608
     highGain = ! highGain;
-    sensor.setGain(setGain);
+    sensor.setGain(highGain);
     delay(1000);
 }

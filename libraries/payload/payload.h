@@ -41,3 +41,19 @@ typedef struct {
 typedef struct {
 	int temp :10; 
 } setTemp;
+
+typedef struct {
+	byte year; 	
+	byte month; 
+	byte day;
+	byte hour;
+	byte minute;
+	byte second;
+} timeSignal;
+
+
+typedef struct {
+	word volts;
+	word amps;
+	boolean dump;
+} windControl;

@@ -1,20 +1,22 @@
 // Demo display for the Graphics Boad
 // 2010-11-14 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id: glcd_demo.pde 6564 2011-01-04 19:26:34Z jcw $
+// $Id: glcd_demo.pde 7701 2011-06-01 13:21:20Z jcw $
 
 #include <GLCD_ST7565.h>
 #include <Ports.h>
 #include <RF12.h> // needed to avoid a linker error :(
 #include <avr/pgmspace.h>
+#include "utility/font_clR6x8.h"
 
 GLCD_ST7565 glcd;
 
 void setup () {
     rf12_initialize(1, RF12_868MHZ);
-    rf12_sleep(0);
+    rf12_sleep(RF12_SLEEP);
     
     glcd.begin();
     glcd.backLight(255);
+    glcd.setFont(font_clR6x8);
 
     // draw a string at a location, use _p variant to reduce RAM use
     glcd.drawString_P(40,  0, PSTR("GLCDlib"));

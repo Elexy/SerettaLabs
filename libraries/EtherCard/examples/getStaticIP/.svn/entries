@@ -1,14 +1,14 @@
 10
 
 dir
-7491
+7735
 svn://svn.jeelabs.org/jeelabs/trunk/libraries/EtherCard/examples/getStaticIP
 svn://svn.jeelabs.org
 
 
 
-2010-11-27T14:08:24.266033Z
-6260
+2011-06-13T14:07:56.768221Z
+7725
 jcw
 
 
@@ -32,10 +32,10 @@ file
 
 
 
-2011-03-16T22:03:29.081232Z
-00173b465627a6567a16e7ffcb162663
-2010-11-27T14:08:24.266033Z
-6260
+2011-06-27T11:01:32.786206Z
+9bd96b13d9de9fc05987e0836586ee4a
+2011-06-13T14:07:56.768221Z
+7725
 jcw
 has-props
 
@@ -58,5 +58,5 @@ has-props
 
 
 
-1992
+1740
 

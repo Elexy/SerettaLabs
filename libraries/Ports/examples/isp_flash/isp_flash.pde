@@ -1,7 +1,8 @@
 // Derived from http://arduino.cc/en/Tutorial/ArduinoISP - 2010-04-17, jcw
-// - Changed to use software SPI on JeeNode ports 1 and 4, various fixes
+// $Id: isp_flash.pde 7700 2011-05-26 10:07:41Z jcw $
+
 // see http://news.jeelabs.org/2010/04/24/isp-plug/
-// $Id: isp_flash.pde 5370 2010-04-27 01:27:03Z jcw $
+// and http://jeelabs.org/2011/05/29/summary-of-isp-options/
 
 // pin definitions
 #define PIN_SCK     14

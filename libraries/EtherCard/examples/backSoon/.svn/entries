@@ -1,14 +1,14 @@
 10
 
 dir
-7491
+7735
 svn://svn.jeelabs.org/jeelabs/trunk/libraries/EtherCard/examples/backSoon
 svn://svn.jeelabs.org
 
 
 
-2011-01-30T16:25:23.931642Z
-6961
+2011-06-15T08:29:21.939419Z
+7727
 jcw
 
 
@@ -32,10 +32,10 @@ file
 
 
 
-2011-03-16T22:03:29.073232Z
-07a511bb71d0c36bbab48981b4fb4471
-2011-01-30T16:25:23.931642Z
-6961
+2011-06-27T11:01:32.746206Z
+b93e088af24f758bc29f19b16e88c53e
+2011-06-15T08:29:21.939419Z
+7727
 jcw
 has-props
 
@@ -58,5 +58,5 @@ has-props
 
 
 
-1190
+1010
 

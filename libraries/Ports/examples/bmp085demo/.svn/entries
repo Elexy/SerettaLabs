@@ -1,14 +1,14 @@
 10
 
 dir
-7491
+7735
 svn://svn.jeelabs.org/jeelabs/trunk/libraries/Ports/examples/bmp085demo
 svn://svn.jeelabs.org
 
 
 
-2010-08-15T23:20:56.266661Z
-5909
+2011-04-07T10:40:28.525123Z
+7502
 jcw
 
 
@@ -32,10 +32,10 @@ file
 
 
 
-2011-03-16T22:03:48.809232Z
-3c4834450055d75d7f75ef4039a3562f
-2010-08-15T23:20:56.266661Z
-5909
+2011-06-27T11:01:33.590210Z
+740c0cdeb4c6a758f8205f80453e5b63
+2011-04-07T10:40:28.525123Z
+7502
 jcw
 has-props
 

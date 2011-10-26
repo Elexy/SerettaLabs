@@ -5,6 +5,7 @@
 #include <GLCD_ST7565.h>
 #include <Ports.h>
 #include <RF12.h>
+#include "utility/font_clR6x8.h"
 
 #define NODE_ID     31
 #define NODE_GROUP  212
@@ -18,6 +19,7 @@ void setup () {
     // Serial.println("\n[JeePU]");
     glcd.begin();
     glcd.backLight(255);
+    glcd.setFont(font_clR6x8);
     glcd.drawString(30,8,"JeePU Host");
     glcd.drawString(16,24,"Group:");
     char t[4];

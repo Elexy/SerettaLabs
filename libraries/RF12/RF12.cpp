@@ -1,6 +1,6 @@
 // RFM12B driver implementation
 // 2009-02-09 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id: RF12.cpp 7200 2011-02-25 15:14:21Z jcw $
+// $Id: RF12.cpp 7733 2011-06-22 01:37:05Z jcw $
 
 #include "RF12.h"
 #include <avr/io.h>
@@ -16,6 +16,7 @@
 #if defined(__AVR_ATmega1280__)
 
 #define RFM_IRQ     2
+#define SS_DDR      DDRB
 #define SS_PORT     PORTB
 #define SS_BIT      0
 #define SPI_SS      53
@@ -26,20 +27,22 @@
 #elif defined(__AVR_ATtiny84__)
 
 #define RFM_IRQ     2
+#define SS_DDR      DDRA
 #define SS_PORT     PORTA
 #define SS_BIT      7
-#define SPI_SS      3
-#define SPI_MISO    5
-#define SPI_MOSI    4
-#define SPI_SCK     6
+#define SPI_SS      3   // PA7, pin 6
+#define SPI_MISO    4   // PA6, pin 7
+#define SPI_MOSI    5   // PA5, pin 8
+#define SPI_SCK     6   // PA4, pin 9
 
 #else
 
 // ATmega328, etc.
 #define RFM_IRQ     2
+#define SS_DDR      DDRB
 #define SS_PORT     PORTB
-#define SS_BIT      2
-#define SPI_SS      10
+#define SS_BIT      2       // 2 = d.10, 1 = d.9
+#define SPI_SS      10      // do not change, must point to h/w SPI pin
 #define SPI_MOSI    11
 #define SPI_MISO    12
 #define SPI_SCK     13
@@ -95,6 +98,8 @@ static uint32_t cryptKey[4];        // encryption key to use
 void (*crypter)(uint8_t);           // does en-/decryption (null if disabled)
 
 static void spi_initialize () {
+    bitSet(SS_PORT, SS_BIT);
+    bitSet(SS_DDR, SS_BIT);
     digitalWrite(SPI_SS, 1);
     pinMode(SPI_SS, OUTPUT);
     pinMode(SPI_MOSI, OUTPUT);
@@ -222,7 +227,7 @@ uint8_t rf12_recvDone () {
         rxstate = TXIDLE;
         if (rf12_len > RF12_MAXDATA)
             rf12_crc = 1; // force bad crc if packet length is invalid
-        if (!(rf12_hdr & RF12_HDR_DST) ||
+        if (!(rf12_hdr & RF12_HDR_DST) || (nodeid & NODE_ID) == 31 ||
                 (rf12_hdr & RF12_HDR_MASK) == (nodeid & NODE_ID)) {
             if (rf12_crc == 0 && crypter != 0)
                 crypter(0);

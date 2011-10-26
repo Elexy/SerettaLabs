@@ -1,15 +1,15 @@
 10
 
 dir
-7491
+7735
 svn://svn.jeelabs.org/jeelabs/trunk/libraries/GLCDlib/examples/glcdNode
 svn://svn.jeelabs.org
 
 
 
-2011-01-18T15:01:38.298570Z
-6659
-sevans
+2011-06-01T13:21:20.788944Z
+7701
+jcw
 
 
 
@@ -32,11 +32,11 @@ file
 
 
 
-2011-03-16T22:03:01.505232Z
-3610c3d4075ad1cce26c328d8db7dce8
-2011-01-18T15:01:38.298570Z
-6659
-sevans
+2011-06-27T11:01:29.230189Z
+2f140e6b822ccc5368a49e0096e021cc
+2011-06-01T13:21:20.788944Z
+7701
+jcw
 has-props
 
 
@@ -58,5 +58,5 @@ has-props
 
 
 
-2355
+2416
 

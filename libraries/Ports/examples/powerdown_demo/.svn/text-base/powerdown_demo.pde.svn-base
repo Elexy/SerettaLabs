@@ -8,7 +8,7 @@
 void setup () {
     // turn the radio off completely
     rf12_initialize(17, RF12_868MHZ);
-    rf12_sleep(0);
+    rf12_sleep(RF12_SLEEP);
 
     // blink the blue LED three times, just because we can
     PORTB |= bit(1);

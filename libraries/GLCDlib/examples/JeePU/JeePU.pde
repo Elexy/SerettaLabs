@@ -1,10 +1,11 @@
 // JeePU Display driver host application.
-// $Id: JeePU.pde 6563 2011-01-04 17:05:46Z jcw $
+// $Id: JeePU.pde 7701 2011-06-01 13:21:20Z jcw $
 
 #include <GLCD_proxymsgs.h>
 #include <GLCD_ST7565.h>
 #include <Ports.h>
 #include <RF12.h>
+#include "utility/font_clR6x8.h"
 
 #define NODE_ID     31
 #define NODE_GROUP  212
@@ -18,6 +19,7 @@ void setup () {
     // Serial.println("\n[JeePU]");
     glcd.begin();
     glcd.backLight(255);
+    glcd.setFont(font_clR6x8);
     glcd.drawString(30,8,"JeePU Host");
     glcd.drawString(16,24,"Group:");
     char t[4];

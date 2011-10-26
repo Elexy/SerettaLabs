@@ -1,8 +1,6 @@
 #include <EtherCard.h>
 #include <stdarg.h>
-#include <avr/pgmspace.h>
 #include <avr/eeprom.h>
-#include <WProgram.h>
 
 void BufferFiller::emit_p(PGM_P fmt, ...) {
     va_list ap;
@@ -46,7 +44,23 @@ void BufferFiller::emit_p(PGM_P fmt, ...) {
     va_end(ap);
 }
 
-void BufferFiller::emit_raw(const char* s, byte len) {
-    memcpy(ptr, s, len);
-    ptr += len;
+EtherCard ether;
+
+uint8_t EtherCard::mymac[6];  // my MAC address
+uint8_t EtherCard::myip[4];   // my ip address
+uint8_t EtherCard::mymask[4]; // my net mask
+uint8_t EtherCard::gwip[4];   // gateway
+uint8_t EtherCard::dnsip[4];  // dns server
+uint8_t EtherCard::hisip[4];  // dns result
+uint16_t EtherCard::hisport = 80; // tcp port to browse to
+
+bool EtherCard::staticSetup (const uint8_t* my_ip,
+                              const uint8_t* gw_ip,
+                               const uint8_t* dns_ip) {
+  if (my_ip != 0)
+    copyIp(myip, my_ip);
+  if (gw_ip != 0)
+    setGwIp(gw_ip);
+  if (dns_ip != 0)
+    copyIp(dnsip, dns_ip);
 }

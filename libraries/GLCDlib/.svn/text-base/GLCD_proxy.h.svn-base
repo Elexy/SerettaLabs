@@ -32,7 +32,7 @@ public:
     void drawRect   (byte x, byte y, byte w, byte h, byte color);
     void fillRect   (byte x, byte y, byte w, byte h, byte color);
     void drawLine   (byte x0, byte y0, byte x1, byte y1, byte color);
-    void drawChar   (byte x, byte y, char c );
+    void drawChar   (byte x, byte y, char c);
     void drawString (byte x, byte y, const char *c);
     void drawString_P (byte x, byte y, const char *c);
     void drawTriangle (byte x0, byte y0, byte x1, byte y1, byte x2, byte y2, byte color);

@@ -1,6 +1,6 @@
 // Ports library definitions
 // 2009-02-13 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id: Ports.h 7213 2011-02-28 19:47:27Z jcw $
+// $Id: Ports.h 7705 2011-06-04 22:52:08Z jcw $
 
 #ifndef Ports_h
 #define Ports_h
@@ -294,9 +294,11 @@ public:
 
     DimmerPlug (PortI2C& port, byte addr)
         : DeviceI2C (port, addr) {}
-        
-    void setReg(byte reg, byte value) const;
+    
+    void begin ();
     byte getReg(byte reg) const;
+    void setReg(byte reg, byte value) const;
+    void setMulti(byte reg, ...) const;
 };
 
 // interface for the Lux Plug - see http://jeelabs.org/xp1

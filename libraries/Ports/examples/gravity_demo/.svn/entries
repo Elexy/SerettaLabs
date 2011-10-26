@@ -1,14 +1,14 @@
 10
 
 dir
-7491
+7735
 svn://svn.jeelabs.org/jeelabs/trunk/libraries/Ports/examples/gravity_demo
 svn://svn.jeelabs.org
 
 
 
-2010-03-19T02:34:43.897432Z
-4884
+2011-04-27T23:13:49.658342Z
+7640
 jcw
 
 
@@ -32,10 +32,10 @@ file
 
 
 
-2011-03-16T22:03:49.177232Z
-d0031652eb3c321e3678c9d31b73cb40
-2010-03-19T02:34:43.897432Z
-4884
+2011-06-27T11:01:33.634211Z
+8836ad9ddfcd274e9e54542df75b82d4
+2011-04-27T23:05:26.206006Z
+7637
 jcw
 has-props
 
@@ -58,5 +58,39 @@ has-props
 
 
 
-666
+852
+
+gravity_demo.tcl
+file
+
+
+
+
+2011-06-27T11:01:33.638211Z
+b970de61451c3f4002e98b86c5d3f9c7
+2011-04-27T23:13:49.658342Z
+7640
+jcw
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1612
 

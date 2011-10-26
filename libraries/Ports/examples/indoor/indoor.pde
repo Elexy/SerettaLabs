@@ -1,6 +1,6 @@
 // Example indoor temp + humidty + barometer, mounted on a Graphics Board
 // 2010-11-17 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id: indoor.pde 6249 2010-11-25 23:26:15Z jcw $
+// $Id: indoor.pde 7502 2011-04-07 10:40:28Z jcw $
 
 #include "ST7565.h"
 #include <Ports.h>
@@ -25,7 +25,7 @@ static void shtDelay () {
 
 void setup () {
     rf12_initialize(1, RF12_868MHZ);
-    rf12_sleep(0); // power down
+    rf12_sleep(RF12_SLEEP); // power down
 
     p_sensor.getCalibData();
 

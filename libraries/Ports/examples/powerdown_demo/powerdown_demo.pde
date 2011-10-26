@@ -1,6 +1,6 @@
 // Sample code to power down a JeeNode completely
 // 2010-08-16 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id: powerdown_demo.pde 5993 2010-09-03 22:18:09Z jcw $
+// $Id: powerdown_demo.pde 7502 2011-04-07 10:40:28Z jcw $
 
 #include <Ports.h>
 #include <RF12.h>
@@ -8,7 +8,7 @@
 void setup () {
     // turn the radio off completely
     rf12_initialize(17, RF12_868MHZ);
-    rf12_sleep(0);
+    rf12_sleep(RF12_SLEEP);
 
     // blink the blue LED three times, just because we can
     PORTB |= bit(1);

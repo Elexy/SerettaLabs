@@ -1,14 +1,14 @@
 10
 
 dir
-7491
+7735
 svn://svn.jeelabs.org/jeelabs/trunk/libraries/Ports/examples/powerdown_demo
 svn://svn.jeelabs.org
 
 
 
-2010-09-03T22:18:09.137875Z
-5993
+2011-04-07T10:40:28.525123Z
+7502
 jcw
 
 
@@ -32,10 +32,10 @@ file
 
 
 
-2011-03-16T22:03:46.029232Z
-6fa3cdb694f0e62be8c7a82de4af2310
-2010-09-03T22:18:09.137875Z
-5993
+2011-06-27T11:01:33.362209Z
+d520cb3fc1609f747dcf8e232c13d41e
+2011-04-07T10:40:28.525123Z
+7502
 jcw
 has-props
 
@@ -58,5 +58,5 @@ has-props
 
 
 
-683
+692
 

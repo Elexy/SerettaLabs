@@ -1,6 +1,6 @@
 // Demo clock for the Graphics Board, this version runs on the internal clock.
 // 2010-11-18 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id: glcdClock.pde 6557 2011-01-04 15:38:02Z jcw $
+// $Id: glcdClock.pde 7701 2011-06-01 13:21:20Z jcw $
 
 #include <GLCD_ST7565.h>
 #include <RTClib.h>
@@ -28,11 +28,7 @@ static void twoDigits(byte x, byte v) {
 }
 
 void setup () {
-    // Serial.begin(57600);
-    // Serial.println("\n[glcdClock]");
-    
-    rtc.begin(DateTime (__DATE__, __TIME__));
-    
+    rtc.begin(DateTime (__DATE__, __TIME__));    
     glcd.begin();
     glcd.backLight(255);
 }
