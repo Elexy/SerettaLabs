@@ -5,16 +5,6 @@
 // define grassTimerID 
 // define windControllerID 12
 
-// errors structure
-typedef struct {
-    int id;
-    const char* desc;
-} errorStruct;
-
-errorStruct errors[1] = {
-    {1, "Gas heater won't start"},
-};
-
 /**
  * Data payload definition.
  */
@@ -27,13 +17,11 @@ typedef struct {
     int afterHeater; // temperature coming out of the tank
     int floorIn; // temperature going in the floor
     int floorFlow; // The water flow speed.
-    int panelOut; // temperature panel out
-    int errorCode; //error code 
+    int tempPanelOut; // temperature panel out
     boolean solarPump; // pump on or off
     byte spPwm; // solar pump pwm
     boolean floorPump; // pump on or off
     byte fpPwm; // pump pwm;
-    boolean heaterPump; //auxilary heater pump
 } casitaData;
 
 typedef struct {
@@ -52,10 +40,8 @@ typedef struct {
     byte humi  :7;  // humidity
     int temp   :10; // temperature
     int dTemp  ; // desired temp
-    int panelOut; // relay the panel out temp
     byte lobat :1;  // supply voltage dropped under 3.1V	
     boolean heat  :1; //need heat to be turned on
-    boolean auxHeat : 1; //allow aux heater to go on
 } roomBoard;
 
 typedef struct {

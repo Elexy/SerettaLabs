@@ -5,7 +5,7 @@
 #include <payload.h>
 #include <PortsSHT11.h>
 
-SHT11 sht11 (3);
+SHT11 sht11 (4);
 
 Port pir_ldr (1);
 
@@ -68,7 +68,7 @@ static void newReadings() {
       roomData.humi = humi + 0.5;
       roomData.temp = 10 * temp + 0.5;
     }
-    //        roomData.lobat = rf12_lowbat();
+       roomData.lobat = rf12_lowbat();
   }
 }
 
@@ -107,11 +107,8 @@ void secondLine()
         lcd.print("tt");
         lcdPrintDec(casita.tankTop);
 //        lcd.write(3);
-        lcd.print("ti");
-        lcdPrintDec(casita.tankIn);
-//        lcd.write(3);
-        lcd.print("sp");
-        lcd.print(casita.solarPump ? 1 : 0);        
+        lcd.print("tb");
+        lcdPrintDec(casita.tankBottom);       
         break;
       case 2 :
         lcd.print("pi");
@@ -119,11 +116,8 @@ void secondLine()
         lcd.print("po");
         lcdPrintDec(panels.tempOut);
         lcd.write(3);        
-        lcd.print("w:");
-        lcd.print(panels.water ? 1 : 0);
         lcd.print("p");
-        lcd.print(panels.needPump ? 1 : 0);
-        lcd.print(panels.pump ? 1 : 0);        
+        lcd.print(casita.solarPump ? 1 : 0);        
         break;      
       case 3 :        
         lcd.print("xo:");
@@ -133,13 +127,23 @@ void secondLine()
         lcdPrintDec(casita.afterHeater);
         lcd.write(3);
         break;      
+      case 4:
+        lcd.print("ti");
+        lcdPrintDec(casita.tankIn);
+        lcd.print("hp");
+        if(casita.errorCode == 1) {
+          lcd.print("error");
+        } else {
+          lcd.print(casita.heaterPump ? 1 : 0);
+        }
+        break;
       default :
         lcd.print("pump:");
         lcd.print(casita.floorPump);
         lcd.print(" flow:");
         lcd.print(casita.floorFlow);
     }
-    count = (count + 1) % 4;
+    count = (count + 1) % 5;
   }
 }
 
@@ -150,28 +154,27 @@ void receive () {
   // data from the casita
   if (rf12_recvDone() && rf12_crc == 0) {
     Serial.println("received packet");
-    Serial.print(RF12_HDR_MASK & rf12_hdr);
-    if((RF12_HDR_MASK & rf12_hdr) == 30) { // casitadata
+    //Serial.print(RF12_HDR_MASK & rf12_hdr);
+    if((RF12_HDR_MASK & rf12_hdr) == casitaID) { // casitadata
       casitaData* buf =  (casitaData*) rf12_data;
 
       casita.floorPump = buf->floorPump;
       casita.floorFlow = buf->floorFlow;
       casita.tankTop   = buf->tankTop;
+      //Serial.println(buf->tankTop);
+      casita.tankBottom= buf->tankBottom;
       casita.tankIn    = buf->tankIn;
       casita.solarPump = buf->solarPump;
-      casita.needPump  = buf->needPump;
       casita.xchangeOut= buf->xchangeOut;
       casita.afterHeater= buf->afterHeater;
-      casita.fpPause   = buf->fpPause;      
-    } else if ((RF12_HDR_MASK & rf12_hdr) == 1) { //paneldata
+    } else if ((RF12_HDR_MASK & rf12_hdr) == panelsID) { //paneldata
       panelData* buf =  (panelData*) rf12_data;
 Serial.println("received paneldata");
-      panels.tempOut = buf->tempOut;
+      roomData.panelOut = panels.tempOut = buf->tempOut; //relay panelouttemp
       panels.tempIn  = buf->tempIn;
       panels.tempAmb = buf->tempAmb;
       panels.pump    = buf->pump;
       panels.water   = buf->water;
-      panels.needPump= buf->needPump;
     }
   } 
   /*else {
@@ -200,7 +203,7 @@ void setup() {
   pir_ldr.mode2(INPUT);
   pir_ldr.digiWrite2(1);  // pull-up AIO
 
-  roomData.dTemp = 197;
+  roomData.dTemp = 200;
 }
 
 boolean heater = false;
@@ -226,15 +229,13 @@ void loop() {
   lcdPrintDec(panels.tempAmb);
   lcd.write(3);
   lcd.print("");
-  if(casita.fpPause) {
-    lcd.print("p");
-  } else {
-    lcd.print((int) roomData.heat);
-  }
-
+  lcd.print((int) roomData.heat);
+    
   secondLine();
-
-  if (sendTimerPanel.poll(5000)) {
+  
+  roomData.auxHeat = 1;   
+  
+  if (sendTimerPanel.poll(2000)) {
     newReadings();     
     
     Serial.print("Living ");
@@ -249,13 +250,15 @@ void loop() {
     Serial.println(showHeat());
     Serial.print("panels: ");
     Serial.println((int) panels.tempAmb);
-    
+    Serial.print("errorCode: ");
+    Serial.println(casita.errorCode);
+    Serial.print(" ");
+    Serial.println(roomData.heat ? '1' : '0');
     while (!rf12_canSend())
       rf12_recvDone();
     rf12_sendStart(0, &roomData, sizeof roomData);            
     rf12_sendWait(2);
-    Serial.print(" ");
-    Serial.println(roomData.heat ? '1' : '0');
+    
   }
 }
 

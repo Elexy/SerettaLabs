@@ -32,6 +32,7 @@ void setup() {
  * The main loop
  */
 void loop() {
+    delay(500);
     Serial.print("Ask temp ");
     askTemp1Wire(sensors[sensorPointer].id);
     delay(1000);

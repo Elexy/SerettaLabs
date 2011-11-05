@@ -7,20 +7,11 @@
 #include <OneWire.h>
 #include <payload.h>
 
-Port WaterSensor (2); // measures restance drop on A1 to signal water 'over' the pump
-Port authLed (4); 
-Port Pump (1); // AIO port 1
-
 OneWire ds18b20 (4); // 1-wire temperature sensors, uses DIO port 1
 // now that we have the port include code for reading
 #include <tempSensors.h>
 
-boolean waterDetected = false;
-boolean PumpOn = false;
-boolean needPump = false;
 MilliTimer sendTimerPanel; // to time sending msgs 
-unsigned long receivedTime = 0; // to expire pump on message
-unsigned long waterTime = 0; // to delay the water sersor reading
 byte needToSend = false;
 boolean tempAsked = false;
 
@@ -34,24 +25,6 @@ SensorInfo sensors[3] = {
 int sensorPointer;  // pointer to step though
 
 panelData payloadData;
-/**
- * Function receive data
- */
-void receive () {
-  if (rf12_recvDone() && rf12_crc == 0 
-    && (RF12_HDR_MASK & rf12_hdr) == 30) {
-    casitaData* buf =  (casitaData*) rf12_data;
-
-    payloadData.needPump = buf->needPump;
-    
-    Serial.print("received packet: ");
-    Serial.println(payloadData.needPump ? "yes" : "no");
-    receivedTime = millis();
-  } else if (millis() > receivedTime + 10000) {
-    // if no pump ON signal received for some time, turn off
-    payloadData.needPump = false;
-  }
-}
         
 void setup() {
   Serial.begin(57600);
@@ -60,10 +33,6 @@ void setup() {
   rf12_config();
   rf12_easyInit(1); // throttle packet sending to at least 5 seconds apart
 
-  WaterSensor.mode2(INPUT);
-  Pump.mode2(OUTPUT);
-  Pump.digiWrite2(HIGH); // off
-  
   sensorPointer = 0; //start with the first sensor    
 }
 
@@ -71,21 +40,6 @@ void setup() {
  * The main loop
  */
 void loop() {
-  receive();
-  payloadData.water = WaterSensor.anaRead() > 1000;
-  
-  if (payloadData.water) { // There is water
-    if (!payloadData.pump && !waterTime) {
-      waterTime = millis();
-    } 
-    payloadData.pump = payloadData.needPump && millis() > waterTime + 5000;
-  } else {
-    payloadData.pump = false;
-    waterTime = 0;
-  }
-  
-  Pump.digiWrite2(!payloadData.pump); //inverted
-  
   if (sendTimerPanel.poll(2000)) {
     Serial.println("R=");
     for( byte i = 0; i < 8; i++) {
@@ -130,12 +84,6 @@ void loop() {
     rf12_sendStart(1, &payloadData, sizeof payloadData);
     rf12_sendWait(2);
     
-    Serial.print("need pump:");
-    Serial.println(payloadData.needPump ? "yes" : "no");
-    Serial.print("pump:");
-    Serial.println(payloadData.pump ? "ON" : "OFF");
-    Serial.print("water:");
-    Serial.println(WaterSensor.anaRead());
     Serial.print("Temperatuur uit: ");
     Serial.print(payloadData.tempOut);
     Serial.println("e-1 C");
