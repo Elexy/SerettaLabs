@@ -156,24 +156,28 @@ void loop() {
   //run gas heater if tank too cold
   if(payloadData.tankTop < tankAuxMin || auxHeater) //payloadData.tankTop > 200
   {
-    //make sure the heater comes on
-    if(auxHeatTimer.poll(60000))
-    {
-      if(auxHeaterAskTemp)
+    // solar pump has preference not on at the same time
+    if(payloadData.solarPump) {
+      payloadData.errorCode = 0;
+    } else { //make sure the heater comes on
+      if(auxHeatTimer.poll(60000))
       {
-        Serial.print("set heaterTemp: ");
-        Serial.println((int) payloadData.afterHeater);
-        auxHeater = true;
-        auxHeaterAskTemp = false;        
-      }
-      else
-      {
-        if(payloadData.afterHeater < payloadData.tankBottom+100) 
+        if(auxHeaterAskTemp)
         {
-          auxHeater = false;
-          if(heaterCounter++ >= 5) payloadData.errorCode = 1;
+          Serial.print("set heaterTemp: ");
+          Serial.println((int) payloadData.afterHeater);
+          auxHeater = true;
+          auxHeaterAskTemp = false;        
         }
-        auxHeaterAskTemp = true;
+        else
+        {
+          if(payloadData.afterHeater < payloadData.tankBottom+100) 
+          {
+            auxHeater = false;
+            if(heaterCounter++ >= 5) payloadData.errorCode = 1;
+          }
+          auxHeaterAskTemp = true;
+        }
       }
     }
   }    

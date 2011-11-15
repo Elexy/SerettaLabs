@@ -1,14 +1,14 @@
 10
 
 dir
-7735
+7762
 svn://svn.jeelabs.org/jeelabs/trunk/libraries/RTClib/examples
 svn://svn.jeelabs.org
 
 
 
-2010-02-04T14:09:18.254470Z
-4773
+2011-06-30T12:52:20.581775Z
+7736
 jcw
 
 
@@ -36,5 +36,8 @@ ds1307
 dir
 
 softrtc
+dir
+
+pcf8563
 dir
 

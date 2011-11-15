@@ -38,6 +38,7 @@ static byte getLight() {
 }
 
 static MilliTimer reportTimer;  // don't report too often, unless moved
+static MilliTimer blTimer;  // don't report too often, unless moved
 static byte prevMotion;         // track motion detector state
 MilliTimer sendTimerPanel; // to time sending msgs 
 MilliTimer lcdTimer; // to time refresh lcd
@@ -167,6 +168,8 @@ void receive () {
       casita.solarPump = buf->solarPump;
       casita.xchangeOut= buf->xchangeOut;
       casita.afterHeater= buf->afterHeater;
+      casita.errorCode = buf->errorCode;
+      casita.heaterPump = buf->heaterPump;
     } else if ((RF12_HDR_MASK & rf12_hdr) == panelsID) { //paneldata
       panelData* buf =  (panelData*) rf12_data;
 Serial.println("received paneldata");
@@ -175,6 +178,12 @@ Serial.println("received paneldata");
       panels.tempAmb = buf->tempAmb;
       panels.pump    = buf->pump;
       panels.water   = buf->water;
+      Serial.print("## tempAmb ");
+      Serial.println((int) panels.tempAmb);
+      Serial.print("## panelsIn ");
+      Serial.println((int) panels.tempIn);
+      Serial.print("## panelsOut ");
+      Serial.println((int) panels.tempOut);
     }
   } 
   /*else {
@@ -192,6 +201,9 @@ void setup() {
   delay(1000);
   lcd.createChar(3, celsius);
   lcd.clear();
+  // now turn off
+  lcd.noBacklight();
+  lcd.noDisplay();
 
   Serial.begin(57600);
   Serial.print("\n[LivingRoom]");
@@ -203,23 +215,33 @@ void setup() {
   pir_ldr.mode2(INPUT);
   pir_ldr.digiWrite2(1);  // pull-up AIO
 
-  roomData.dTemp = 200;
+  roomData.dTemp = 206;
 }
 
-boolean heater = false;
+//boolean heater = false;
+
 
 void loop() {
   receive();
-  if ( !(roomData.temp > roomData.dTemp + 1) 
-      &&
-      roomData.temp <= roomData.dTemp - 1 ) {      
+  if (roomData.temp <= roomData.dTemp - 1)
+  {      
     roomData.heat = 1;
-    heater = true;
-  } else {
+  } 
+  if (roomData.temp >roomData.dTemp + 1) {
     roomData.heat = 0; 
-    heater = false;
   }
-
+  
+  if(roomData.moved) {
+    lcd.display();
+    lcd.backlight();    
+    blTimer.set(30000);
+  }
+  
+  if(blTimer.poll() && !roomData.moved) {
+    lcd.noBacklight();
+    lcd.noDisplay();
+  }
+  
   // set the cursor to column 0, line 1
   lcd.setCursor(0, 0);
   // print the current temp
@@ -236,9 +258,8 @@ void loop() {
   roomData.auxHeat = 1;   
   
   if (sendTimerPanel.poll(2000)) {
-    newReadings();     
+    newReadings();    
     
-    Serial.print("Living ");
     Serial.print((int) roomData.light);
     Serial.print(' ');
     Serial.print((int) roomData.moved);
@@ -248,8 +269,6 @@ void loop() {
     Serial.print((int) roomData.temp);
     Serial.print(' ');
     Serial.println(showHeat());
-    Serial.print("panels: ");
-    Serial.println((int) panels.tempAmb);
     Serial.print("errorCode: ");
     Serial.println(casita.errorCode);
     Serial.print(" ");

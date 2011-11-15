@@ -44,7 +44,7 @@ static RF12Config config;
 
 static char cmd;
 static byte value, stack[RF12_MAXDATA], top, sendLen, dest, quiet;
-static byte testbuf[RF12_MAXDATA];
+static byte testbuf[RF12_MAXDATA], testCounter;
 
 static void addCh (char* msg, char c) {
     byte n = strlen(msg);
@@ -159,6 +159,7 @@ static void kakuSend(char addr, byte device, byte on) {
 #define DF_LOG_LIMIT    0x0700      // last 64k is not used for logging
 #define DF_MEM_TOTAL    0x0800      // 2048 pages, i.e. 0.5 Mbyte
 #define DF_DEVICE_ID    0x1F44      // see AT25DF041A datasheet
+#define DF_PAGE_ERASE   0x20        // erase one block of flash memory
 #endif
 
 #if FLASH_MBIT == 8
@@ -168,6 +169,7 @@ static void kakuSend(char addr, byte device, byte on) {
 #define DF_LOG_LIMIT    0x0F00      // last 64k is not used for logging
 #define DF_MEM_TOTAL    0x1000      // 4096 pages, i.e. 1 Mbyte
 #define DF_DEVICE_ID    0x1F45      // see AT26DF081A datasheet
+#define DF_PAGE_ERASE   0x20        // erase one block of flash memory
 #endif
 
 #if FLASH_MBIT == 16
@@ -177,6 +179,7 @@ static void kakuSend(char addr, byte device, byte on) {
 #define DF_LOG_LIMIT    0x1F00      // last 64k is not used for logging
 #define DF_MEM_TOTAL    0x2000      // 8192 pages, i.e. 2 Mbyte
 #define DF_DEVICE_ID    0x2020      // see M25P16 datasheet
+#define DF_PAGE_ERASE   0xD8        // erase one block of flash memory
 #endif
 
 // structure of each page in the log buffer, size must be exactly 256 bytes
@@ -238,15 +241,15 @@ void df_command (byte cmd) {
     df_xfer(cmd);
 }
 
+static void df_deselect () {
+    df_disable();
+    sei();
+}
+
 static void df_writeCmd (byte cmd) {
     df_command(0x06); // Write Enable
     df_deselect();
     df_command(cmd);
-}
-
-static void df_deselect () {
-    df_disable();
-    sei();
 }
 
 void df_read (word block, word off, void* buf, word len) {
@@ -277,7 +280,7 @@ void df_flush () {
 static void df_wipe () {
     Serial.println("DF W");
     
-    df_writeCmd(0x60);      // Chip Erase
+    df_writeCmd(0xC7); // Chip Erase
     df_deselect();
     df_flush();
 }
@@ -286,7 +289,7 @@ static void df_erase (word block) {
     Serial.print("DF E ");
     Serial.println(block);
     
-    df_writeCmd(0x20);      // Block Erase
+    df_writeCmd(DF_PAGE_ERASE); // Block Erase
     df_xfer(block >> 8);
     df_xfer(block);
     df_xfer(0);
@@ -533,7 +536,7 @@ char helpText1[] PROGMEM =
     "  <addr>,<dev>,<on> k              - KAKU command (433 MHz)" "\n"
 ;
 char helpText2[] PROGMEM = 
-    "Flash storage (JeeLink v2 only):" "\n"
+    "Flash storage (JeeLink only):" "\n"
     "  d                                - dump all log markers" "\n"
     "  <sh>,<sl>,<t3>,<t2>,<t1>,<t0> r  - replay from specified marker" "\n"
     "  123,<bhi>,<blo> e                - erase 4K block" "\n"
@@ -600,7 +603,10 @@ static void handleInput (char c) {
                 sendLen = RF12_MAXDATA;
                 dest = 0;
                 for (byte i = 0; i < RF12_MAXDATA; ++i)
-                    testbuf[i] = i;
+                    testbuf[i] = i + testCounter;
+                Serial.print("test ");
+                Serial.println((int) testCounter); // first byte in test buffer
+                ++testCounter;
                 break;
             case 'a': // send packet to node ID N, request an ack
             case 's': // send packet to node ID N, no ack
@@ -645,8 +651,10 @@ static void handleInput (char c) {
                 }
                 break;
             case 'w': // wipe entire flash memory
-                if (df_present() && stack[0] == 12 && value == 34)
+                if (df_present() && stack[0] == 12 && value == 34) {
                     df_wipe();
+                    Serial.println("erased");
+                }
                 break;
             case 'q': // turn quiet mode on or off (don't report bad packets)
                 quiet = value;
@@ -663,7 +671,7 @@ static void handleInput (char c) {
 
 void setup() {
     Serial.begin(57600);
-    Serial.print("\n[RF12demo.7]");
+    Serial.print("\n[RF12demo.8]");
 
     if (rf12_config()) {
         config.nodeId = eeprom_read_byte(RF12_EEPROM_ADDR);

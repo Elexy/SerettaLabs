@@ -1,6 +1,6 @@
 // A library for handling real-time clocks, dates, etc.
 // 2010-02-04 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id: RTClib.h 4773 2010-02-04 14:09:18Z jcw $
+// $Id: RTClib.h 7736 2011-06-30 12:52:20Z jcw $
 
 // Simple general-purpose date/time class (no TZ / DST / leap second handling!)
 class DateTime {
@@ -27,6 +27,19 @@ protected:
 
 // RTC based on the DS1307 chip connected via I2C and the Wire library
 class RTC_DS1307 {
+public:
+    static void begin() {}
+    static void adjust(const DateTime& dt);
+    static DateTime now();
+
+    // utility functions
+    static uint8_t bcd2bin (uint8_t val) { return val - 6 * (val >> 4); }
+    static uint8_t bin2bcd (uint8_t val) { return val + 6 * (val / 10); }
+};
+
+// RTC based on the PCF8563 chip connected via I2C and the Wire library
+// contributed by @mariusster, see http://forum.jeelabs.net/comment/1902
+class RTC_PCF8563 {
 public:
     static void begin() {}
     static void adjust(const DateTime& dt);

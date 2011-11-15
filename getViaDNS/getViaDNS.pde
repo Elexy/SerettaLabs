@@ -1,56 +1,53 @@
 // This demo does web requests via DNS lookup, using a fixed gateway.
 // 2010-11-27 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
-// $Id: getViaDNS.pde 6260 2010-11-27 14:08:24Z jcw $
+// $Id: getViaDNS.pde 7727 2011-06-15 08:29:21Z jcw $
 
 #include <EtherCard.h>
 #include <Ports.h>
 #include <RF12.h> // needed to avoid a linker error :(
 
 // ethernet interface mac address
-static byte mymac[6] = { 0x54,0x55,0x58,0x10,0x00,0x26 };
+static byte mymac[] = { 0x74,0x69,0x69,0x2D,0x30,0x31 };
 // ethernet interface ip address
-static byte myip[4] = { 192,168,1,10 };
+static byte myip[] = { 192,168,1,203 };
 // gateway ip address
-static byte gwip[4] = { 192,168,1,254 };
+static byte gwip[] = { 192,168,1,254 };
 // remote website name
-static char hisname[] PROGMEM = "jeefiles.equi4.com";
+char website[] PROGMEM = "jeefiles.equi4.com";
 
 #define REQUEST_RATE 5000 // milliseconds
 
-EtherCard eth;
+byte Ethernet::buffer[300];   // a very small tcp/ip buffer is enough here
 MilliTimer requestTimer;
-
-static byte buf[300];   // a very small tcp/ip buffer is enough here
 
 // called when the client request is complete
 static void my_result_cb (byte status, word off, word len) {
     Serial.print("<<< ");
     Serial.print(REQUEST_RATE - requestTimer.remaining());
     Serial.println(" ms");
-    Serial.print((const char*) buf + off);
+    Serial.print((const char*) Ethernet::buffer + off);
 }
 
 void setup () {
     Serial.begin(57600);
     Serial.println("\n[getViaDNS]");
     
-    eth.spiInit();
-    eth.initialize(mymac);
-    eth.initIp(mymac, myip, 0);
-    eth.clientSetGwIp(gwip);    // outgoing requests need a gateway
-        
-    if (!eth.dnsLookup(hisname, buf, sizeof buf))
-        Serial.println("DNS lookup failed");
+    ether.begin(sizeof Ethernet::buffer, mymac);
+    ether.staticSetup(myip, gwip);
+
+    if (!ether.dnsLookup(website))
+      Serial.println("DNS failed");
+
+    ether.printIp("Server: ", ether.hisip);
     
-    Serial.println("ok");
     requestTimer.set(1); // send first request as soon as possible
 }
 
 void loop () {
-    eth.packetLoop(buf, eth.packetReceive(buf, sizeof buf));
+    ether.packetLoop(ether.packetReceive());
     
     if (requestTimer.poll(REQUEST_RATE)) {
         Serial.println(">>> REQ");
-        eth.browseUrl(PSTR("/foo/"), "bar", hisname, my_result_cb);
+        ether.browseUrl(PSTR("/foo/"), "bar", website, my_result_cb);
     }
 }

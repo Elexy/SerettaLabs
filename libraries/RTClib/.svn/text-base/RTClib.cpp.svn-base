@@ -7,8 +7,12 @@
 #include "RTClib.h"
 #include <WProgram.h>
 
-#define DS1307_ADDRESS 0x68
-#define SECONDS_PER_DAY 86400L
+#define DS1307_ADDRESS      0x68
+
+#define PCF8563_ADDRESS     0x51
+#define PCF8563_SEC_ADDR    0x02
+
+#define SECONDS_PER_DAY     86400L
 
 ////////////////////////////////////////////////////////////////////////////////
 // utility code, some of this could be exposed in the DateTime API if needed
@@ -140,6 +144,48 @@ DateTime RTC_DS1307::now() {
     Wire.receive();
     uint8_t d = bcd2bin(Wire.receive());
     uint8_t m = bcd2bin(Wire.receive());
+    uint16_t y = bcd2bin(Wire.receive()) + 2000;
+    
+    return DateTime (y, m, d, hh, mm, ss);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// RTC_PCF8563 implementation
+// contributed by @mariusster, see http://forum.jeelabs.net/comment/1902
+
+void RTC_PCF8563::adjust(const DateTime& dt) {
+    Wire.beginTransmission(PCF8563_ADDRESS);
+    Wire.send(0);
+    Wire.send(0x0);                         // control/status1
+    Wire.send(0x0);                         // control/status2
+    Wire.send(bin2bcd(dt.second()));        // set seconds
+    Wire.send(bin2bcd(dt.minute()));        // set minutes
+    Wire.send(bin2bcd(dt.hour()));          // set hour
+    Wire.send(bin2bcd(dt.day()));           // set day
+    Wire.send(0x01);                        // set weekday
+    Wire.send(bin2bcd(dt.month()));         // set month, century to 1
+    Wire.send(bin2bcd(dt.year() - 2000));   // set year to 00-99
+    Wire.send(0x80);                        // minute alarm value reset to 00
+    Wire.send(0x80);                        // hour alarm value reset to 00
+    Wire.send(0x80);                        // day alarm value reset to 00
+    Wire.send(0x80);                        // weekday alarm value reset to 00
+    Wire.send(0x0);                         // set freqout 0= 32768khz, 1= 1hz
+    Wire.send(0x0);                         // timer off
+    Wire.endTransmission();
+}
+
+DateTime RTC_PCF8563::now() {
+    Wire.beginTransmission(PCF8563_ADDRESS);
+    Wire.send(PCF8563_SEC_ADDR);
+    Wire.endTransmission();
+
+    Wire.requestFrom(PCF8563_ADDRESS, 7);
+    uint8_t ss = bcd2bin(Wire.receive() & 0x7F);
+    uint8_t mm = bcd2bin(Wire.receive() & 0x7F);
+    uint8_t hh = bcd2bin(Wire.receive() & 0x3F);
+    uint8_t d = bcd2bin(Wire.receive() & 0x3F);
+    Wire.receive();
+    uint8_t m = bcd2bin(Wire.receive()& 0x1F);
     uint16_t y = bcd2bin(Wire.receive()) + 2000;
     
     return DateTime (y, m, d, hh, mm, ss);

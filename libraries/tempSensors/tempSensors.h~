@@ -14,7 +14,7 @@ int tempWaitTime = 1000; // to time between ask and read temp on the ds18
 int tankMin = 600; // minimum tank temperature
 int tankMax = 950; // maximum tank temperature
 int afterHeaterMax = 900; // maximum temperature after heater
-int tankAuxMax = 750; // maximum tank temperature when heating with GAS
+int tankAuxMax = 650; // maximum tank temperature when heating with GAS
 int tankAuxMin = 550; // minimum tank temperature when heating with GAS
 
 // sensors structure

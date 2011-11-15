@@ -1,7 +1,7 @@
 10
 
 dir
-7735
+7762
 svn://svn.jeelabs.org/jeelabs/trunk/libraries/Ports/examples
 svn://svn.jeelabs.org
 
@@ -74,10 +74,10 @@ dir
 ir_repeater
 dir
 
-thermo_demo
+output_stepper
 dir
 
-output_stepper
+thermo_demo
 dir
 
 heading_demo
@@ -89,16 +89,16 @@ dir
 sht11demo
 dir
 
-lcd_demo
-dir
-
 expander
 dir
 
-proximity_demo
+lcd_demo
 dir
 
 isp_flash
+dir
+
+proximity_demo
 dir
 
 isp_prepare
@@ -107,13 +107,13 @@ dir
 memory_demo
 dir
 
-dcf77demo
+isp_repair2
 dir
 
 button_demo
 dir
 
-isp_repair2
+dcf77demo
 dir
 
 relay_demo

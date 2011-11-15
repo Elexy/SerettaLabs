@@ -57,8 +57,8 @@ static void addBytes (byte len, const byte* data) {
         addToBuf(*data++);
 }
 
-static byte dhcp_ready(void) {
-    if (dhcpState == DHCP_STATE_OK && leaseStart + leaseTime <= millis())
+static byte dhcp_ready () {
+    if (dhcpState == DHCP_STATE_OK && millis() >= leaseStart + leaseTime)
         dhcpState = DHCP_STATE_RENEW;
     return dhcpState == DHCP_STATE_OK;
 }
@@ -107,6 +107,11 @@ static void dhcp_send (byte request) {
         addToBuf(50); // Request IP address
         addToBuf(4);
         addBytes(4, EtherCard::myip);
+
+        // Request using server ip address
+        addToBuf(54); // Server IP address
+        addToBuf(4);
+        addBytes(4, EtherCard::dhcpip);
     }
     
     // Additional info in parameter list - minimal list for what we need
@@ -145,13 +150,15 @@ static void have_dhcpoffer (word len) {
                          leaseTime = (leaseTime + ptr[i]) << 8;
                      leaseTime *= 1000;      // milliseconds
                      break;
+            case 54: EtherCard::copyIp(EtherCard::dhcpip, ptr);
+                     break;
         }
         ptr += optionLen;
     } while (ptr < gPB + len);
     dhcp_send(DHCP_STATE_REQUEST);
 }
 
-static void have_dhcpack (word len) {
+static void have_dhcpack (word /*len*/) {
     dhcpState = DHCP_STATE_OK;
     leaseStart = millis();
 }
@@ -175,13 +182,16 @@ static void check_for_dhcp_answer (word len) {
 bool EtherCard::dhcpSetup () {
   currentXid = millis();
   // Set a unique hostname, use Arduino-?? with last octet of mac address
-  hostname[8] = 'A' + (mymac[6] >> 4);
-  hostname[9] = 'A' + (mymac[6] & 0x0F);
+  hostname[8] = 'A' + (mymac[5] >> 4);
+  hostname[9] = 'A' + (mymac[5] & 0x0F);
+  myip[0] = 0; // force invalid IP address
 
   for (byte i = 0; i < 3; ++i) {
     dhcpState = DHCP_STATE_INIT;
     word start = millis();
-    while (myip[0] == 0 && (word) (millis() - start) < 5000) {
+    while (myip[0] == 0 && (word) (millis() - start) < 10000) {
+      if (!isLinkUp())
+        continue;
       word len = packetReceive();
       if (len == 0 || packetLoop(len) > 0)
         continue;
@@ -207,4 +217,8 @@ bool EtherCard::dhcpSetup () {
     }
   }
   return false;
+}
+
+bool EtherCard::dhcpExpired () {
+  return !dhcp_ready() && dhcpState == DHCP_STATE_RENEW;
 }

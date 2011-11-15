@@ -37,6 +37,19 @@ public:
     static uint8_t bin2bcd (uint8_t val) { return val + 6 * (val / 10); }
 };
 
+// RTC based on the PCF8563 chip connected via I2C and the Wire library
+// contributed by @mariusster, see http://forum.jeelabs.net/comment/1902
+class RTC_PCF8563 {
+public:
+    static void begin() {}
+    static void adjust(const DateTime& dt);
+    static DateTime now();
+
+    // utility functions
+    static uint8_t bcd2bin (uint8_t val) { return val - 6 * (val >> 4); }
+    static uint8_t bin2bcd (uint8_t val) { return val + 6 * (val / 10); }
+};
+
 // RTC using the internal millis() clock, has to be initialized before use
 // NOTE: this clock won't be correct once the millis() timer rolls over (>49d?)
 class RTC_Millis {

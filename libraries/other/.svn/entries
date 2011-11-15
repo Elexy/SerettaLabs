@@ -1,14 +1,14 @@
 10
 
 dir
-7735
+7762
 svn://svn.jeelabs.org/jeelabs/trunk/libraries/other
 svn://svn.jeelabs.org
 
 
 
-2010-09-15T11:57:29.077477Z
-6024
+2011-07-05T18:22:33.014059Z
+7745
 jcw
 
 
@@ -25,4 +25,7 @@ jcw
 
 
 9e558909-932a-0410-a563-af77432da1eb
+
+sense2
+dir
 

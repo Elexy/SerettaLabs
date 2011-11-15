@@ -1,14 +1,14 @@
 10
 
 dir
-7735
+7762
 svn://svn.jeelabs.org/jeelabs/trunk/libraries/GLCDlib
 svn://svn.jeelabs.org
 
 
 
-2011-06-06T01:12:56.461588Z
-7710
+2011-07-05T18:32:26.596409Z
+7746
 jcw
 has-props
 
@@ -334,9 +334,6 @@ has-props
 
 
 1881
-
-Work in progress
-dir
 
 examples
 dir

@@ -1,7 +1,7 @@
 10
 
 dir
-7735
+7762
 svn://svn.jeelabs.org/jeelabs/trunk/libraries/GLCDlib/utility
 svn://svn.jeelabs.org
 
@@ -60,40 +60,6 @@ has-props
 
 3367
 
-font_lubBI18.h
-file
-
-
-
-
-2011-06-27T11:01:28.878187Z
-e6e0ca7e68b8d51b36057ab41e9f032d
-2011-06-01T13:21:20.788944Z
-7701
-jcw
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-16053
-
 font_helvB24.h
 file
 
@@ -127,6 +93,40 @@ has-props
 
 
 21336
+
+font_lubBI18.h
+file
+
+
+
+
+2011-06-27T11:01:28.878187Z
+e6e0ca7e68b8d51b36057ab41e9f032d
+2011-06-01T13:21:20.788944Z
+7701
+jcw
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+16053
 
 font_cu12.h
 file
@@ -162,40 +162,6 @@ has-props
 
 7920
 
-font_symb10.h
-file
-
-
-
-
-2011-06-27T11:01:28.890187Z
-0ff84b44f892d75986b7e895dd252ce2
-2011-06-01T13:21:20.788944Z
-7701
-jcw
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-7202
-
 font_ncenR24.h
 file
 
@@ -229,6 +195,40 @@ has-props
 
 
 21459
+
+font_symb10.h
+file
+
+
+
+
+2011-06-27T11:01:28.890187Z
+0ff84b44f892d75986b7e895dd252ce2
+2011-06-01T13:21:20.788944Z
+7701
+jcw
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+7202
 
 font_lutRS24.h
 file
@@ -298,40 +298,6 @@ has-props
 
 19466
 
-font_luIS24.h
-file
-
-
-
-
-2011-06-27T11:01:28.902187Z
-badcf525ab1bb9540c26266df0546ccd
-2011-06-01T13:21:20.788944Z
-7701
-jcw
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-23456
-
 font_8x13O.h
 file
 
@@ -365,6 +331,40 @@ has-props
 
 
 3211
+
+font_luIS24.h
+file
+
+
+
+
+2011-06-27T11:01:28.902187Z
+badcf525ab1bb9540c26266df0546ccd
+2011-06-01T13:21:20.788944Z
+7701
+jcw
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+23456
 
 font_symb18.h
 file
@@ -1114,14 +1114,14 @@ has-props
 
 7391
 
-font_timBI12.h
+font_lubBI19.h
 file
 
 
 
 
-2011-06-27T11:01:28.982188Z
-da6c984eed03dcaf0a33228b0f2898f0
+2011-06-27T11:01:28.986188Z
+b1d0fab46e8945a8ae43ee9483d4a4c9
 2011-06-01T13:21:20.788944Z
 7701
 jcw
@@ -1146,7 +1146,7 @@ has-props
 
 
 
-8144
+16882
 
 font_clR9x15.h
 file
@@ -1182,14 +1182,14 @@ has-props
 
 4263
 
-font_lubBI19.h
+font_timBI12.h
 file
 
 
 
 
-2011-06-27T11:01:28.986188Z
-b1d0fab46e8945a8ae43ee9483d4a4c9
+2011-06-27T11:01:28.982188Z
+da6c984eed03dcaf0a33228b0f2898f0
 2011-06-01T13:21:20.788944Z
 7701
 jcw
@@ -1214,41 +1214,7 @@ has-props
 
 
 
-16882
-
-font_9x15B.h
-file
-
-
-
-
-2011-06-27T11:01:28.990188Z
-638f7fcfb640d231571d0f93f0d137e5
-2011-06-01T13:21:20.788944Z
-7701
-jcw
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-4679
+8144
 
 font_helvB08.h
 file
@@ -1283,6 +1249,40 @@ has-props
 
 
 5754
+
+font_9x15B.h
+file
+
+
+
+
+2011-06-27T11:01:28.990188Z
+638f7fcfb640d231571d0f93f0d137e5
+2011-06-01T13:21:20.788944Z
+7701
+jcw
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+4679
 
 font_timI18.h
 file
@@ -1386,40 +1386,6 @@ has-props
 
 16036
 
-font_lutRS08.h
-file
-
-
-
-
-2011-06-27T11:01:29.006188Z
-9c6a38de94bc2779b9870c7d94f57795
-2011-06-01T13:21:20.788944Z
-7701
-jcw
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-5583
-
 font_clB8x10.h
 file
 
@@ -1453,6 +1419,40 @@ has-props
 
 
 3051
+
+font_lutRS08.h
+file
+
+
+
+
+2011-06-27T11:01:29.006188Z
+9c6a38de94bc2779b9870c7d94f57795
+2011-06-01T13:21:20.788944Z
+7701
+jcw
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+5583
 
 font_courB08.h
 file
@@ -1522,40 +1522,6 @@ has-props
 
 12543
 
-font_luIS08.h
-file
-
-
-
-
-2011-06-27T11:01:29.010188Z
-dc067718a96be3dbd36adecde0e5b191
-2011-06-01T13:21:20.788944Z
-7701
-jcw
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-5879
-
 font_helvBO14.h
 file
 
@@ -1589,6 +1555,40 @@ has-props
 
 
 10468
+
+font_luIS08.h
+file
+
+
+
+
+2011-06-27T11:01:29.010188Z
+dc067718a96be3dbd36adecde0e5b191
+2011-06-01T13:21:20.788944Z
+7701
+jcw
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+5879
 
 font_luRS10.h
 file
@@ -1726,40 +1726,6 @@ has-props
 
 21158
 
-font_luRS18.h
-file
-
-
-
-
-2011-06-27T11:01:29.018188Z
-da73751fc08387ac1d460d5a118a346a
-2011-06-01T13:21:20.788944Z
-7701
-jcw
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-13466
-
 font_charBI24.h
 file
 
@@ -1793,6 +1759,40 @@ has-props
 
 
 25093
+
+font_luRS18.h
+file
+
+
+
+
+2011-06-27T11:01:29.018188Z
+da73751fc08387ac1d460d5a118a346a
+2011-06-01T13:21:20.788944Z
+7701
+jcw
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+13466
 
 font_lubI14.h
 file
@@ -1896,40 +1896,6 @@ has-props
 
 5189
 
-font_timB08.h
-file
-
-
-
-
-2011-06-27T11:01:29.022188Z
-0be5918f653400fcbda813067e32a1f2
-2011-06-01T13:21:20.788944Z
-7701
-jcw
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-5650
-
 font_7x14.h
 file
 
@@ -1963,6 +1929,40 @@ has-props
 
 
 3398
+
+font_timB08.h
+file
+
+
+
+
+2011-06-27T11:01:29.022188Z
+0be5918f653400fcbda813067e32a1f2
+2011-06-01T13:21:20.788944Z
+7701
+jcw
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+5650
 
 font_7x14B.h
 file
@@ -4310,14 +4310,14 @@ has-props
 
 10522
 
-font_lutRS19.h
+font_5x7.h
 file
 
 
 
 
 2011-06-27T11:01:29.110188Z
-e581d3f31120c25452e6b0c9c6714845
+7becfb00f3e6091fcc55fe68fbb0724a
 2011-06-01T13:21:20.788944Z
 7701
 jcw
@@ -4342,7 +4342,7 @@ has-props
 
 
 
-14092
+1547
 
 font_clR5x6.h
 file
@@ -4378,14 +4378,14 @@ has-props
 
 1367
 
-font_5x7.h
+font_lutRS19.h
 file
 
 
 
 
 2011-06-27T11:01:29.110188Z
-7becfb00f3e6091fcc55fe68fbb0724a
+e581d3f31120c25452e6b0c9c6714845
 2011-06-01T13:21:20.788944Z
 7701
 jcw
@@ -4410,41 +4410,7 @@ has-props
 
 
 
-1547
-
-font_luIS19.h
-file
-
-
-
-
-2011-06-27T11:01:29.114188Z
-4072116ed415c358d5112b267ca61dca
-2011-06-01T13:21:20.788944Z
-7701
-jcw
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-15242
+14092
 
 font_luBIS08.h
 file
@@ -4480,14 +4446,14 @@ has-props
 
 6530
 
-font_charI10.h
+font_luIS19.h
 file
 
 
 
 
 2011-06-27T11:01:29.114188Z
-12141cb260725a0ec6fc2d08960c1cfc
+4072116ed415c358d5112b267ca61dca
 2011-06-01T13:21:20.788944Z
 7701
 jcw
@@ -4512,7 +4478,7 @@ has-props
 
 
 
-6938
+15242
 
 font_helvBO08.h
 file
@@ -4547,6 +4513,40 @@ has-props
 
 
 6161
+
+font_charI10.h
+file
+
+
+
+
+2011-06-27T11:01:29.114188Z
+12141cb260725a0ec6fc2d08960c1cfc
+2011-06-01T13:21:20.788944Z
+7701
+jcw
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+6938
 
 font_clR8x8.h
 file
@@ -4786,40 +4786,6 @@ has-props
 
 6113
 
-font_symb14.h
-file
-
-
-
-
-2011-06-27T11:01:28.894187Z
-62bcea5848280849bec0f966279beeea
-2011-06-01T13:21:20.788944Z
-7701
-jcw
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-9600
-
 font_clB6x10.h
 file
 
@@ -4853,6 +4819,40 @@ has-props
 
 
 2485
+
+font_symb14.h
+file
+
+
+
+
+2011-06-27T11:01:28.894187Z
+62bcea5848280849bec0f966279beeea
+2011-06-01T13:21:20.788944Z
+7701
+jcw
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+9600
 
 font_clB8x13.h
 file
@@ -4956,40 +4956,6 @@ has-props
 
 9266
 
-font_lutBS12.h
-file
-
-
-
-
-2011-06-27T11:01:28.914187Z
-24e6ed8e181bba196a0aac25fa38ab12
-2011-06-01T13:21:20.788944Z
-7701
-jcw
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-8649
-
 font_courBO12.h
 file
 
@@ -5023,6 +4989,40 @@ has-props
 
 
 8659
+
+font_lutBS12.h
+file
+
+
+
+
+2011-06-27T11:01:28.914187Z
+24e6ed8e181bba196a0aac25fa38ab12
+2011-06-01T13:21:20.788944Z
+7701
+jcw
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+8649
 
 font_clR6x10.h
 file
@@ -5636,40 +5636,6 @@ has-props
 
 7808
 
-font_6x12.h
-file
-
-
-
-
-2011-06-27T11:01:28.970188Z
-70f68e83c6bd26f6c1201e5975fa4720
-2011-06-01T13:21:20.788944Z
-7701
-jcw
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-2235
-
 font_courO18.h
 file
 
@@ -5703,6 +5669,40 @@ has-props
 
 
 11238
+
+font_6x12.h
+file
+
+
+
+
+2011-06-27T11:01:28.970188Z
+70f68e83c6bd26f6c1201e5975fa4720
+2011-06-01T13:21:20.788944Z
+7701
+jcw
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2235
 
 font_6x13B.h
 file
@@ -5772,40 +5772,6 @@ has-props
 
 9452
 
-font_lubR24.h
-file
-
-
-
-
-2011-06-27T11:01:28.994188Z
-80d109168add0911119cd8b83c3d1f2c
-2011-06-01T13:21:20.788944Z
-7701
-jcw
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-21936
-
 font_luBS14.h
 file
 
@@ -5839,6 +5805,40 @@ has-props
 
 
 11729
+
+font_lubR24.h
+file
+
+
+
+
+2011-06-27T11:01:28.994188Z
+80d109168add0911119cd8b83c3d1f2c
+2011-06-01T13:21:20.788944Z
+7701
+jcw
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+21936
 
 font_timR12.h
 file
@@ -5874,40 +5874,6 @@ has-props
 
 7434
 
-font_clI8x8.h
-file
-
-
-
-
-2011-06-27T11:01:29.002188Z
-b30dcacaa91696f896e7ef778f8112c4
-2011-06-01T13:21:20.788944Z
-7701
-jcw
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-2548
-
 font_luBIS10.h
 file
 
@@ -5941,6 +5907,40 @@ has-props
 
 
 8049
+
+font_clI8x8.h
+file
+
+
+
+
+2011-06-27T11:01:29.002188Z
+b30dcacaa91696f896e7ef778f8112c4
+2011-06-01T13:21:20.788944Z
+7701
+jcw
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2548
 
 font_helvBO10.h
 file
@@ -6384,40 +6384,6 @@ has-props
 
 5998
 
-font_symb24.h
-file
-
-
-
-
-2011-06-27T11:01:29.026188Z
-9f92371ddca47b30397260e71cb52e46
-2011-06-01T13:21:20.788944Z
-7701
-jcw
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-21459
-
 font_charB10.h
 file
 
@@ -6451,6 +6417,40 @@ has-props
 
 
 7421
+
+font_symb24.h
+file
+
+
+
+
+2011-06-27T11:01:29.026188Z
+9f92371ddca47b30397260e71cb52e46
+2011-06-01T13:21:20.788944Z
+7701
+jcw
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+21459
 
 font_clR6x6.h
 file
@@ -6792,40 +6792,6 @@ has-props
 
 13291
 
-font_term14.h
-file
-
-
-
-
-2011-06-27T11:01:29.038188Z
-33f33fc8cc7ee178aa0a736854a2c341
-2011-06-01T13:21:20.788944Z
-7701
-jcw
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-6674
-
 font_lubR08.h
 file
 
@@ -6859,6 +6825,40 @@ has-props
 
 
 5815
+
+font_term14.h
+file
+
+
+
+
+2011-06-27T11:01:29.038188Z
+33f33fc8cc7ee178aa0a736854a2c341
+2011-06-01T13:21:20.788944Z
+7701
+jcw
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+6674
 
 font_clB6x12.h
 file
@@ -6894,40 +6894,6 @@ has-props
 
 2810
 
-font_tech14.h
-file
-
-
-
-
-2011-06-27T11:01:29.046188Z
-de370c01226ab870ced69148190254c6
-2011-06-01T13:21:20.788944Z
-7701
-jcw
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-7222
-
 font_luBIS19.h
 file
 
@@ -6961,6 +6927,40 @@ has-props
 
 
 18431
+
+font_tech14.h
+file
+
+
+
+
+2011-06-27T11:01:29.046188Z
+de370c01226ab870ced69148190254c6
+2011-06-01T13:21:20.788944Z
+7701
+jcw
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+7222
 
 font_ncenB14.h
 file
@@ -6996,40 +6996,6 @@ has-props
 
 10747
 
-font_lutBS14.h
-file
-
-
-
-
-2011-06-27T11:01:29.050188Z
-8db4c081868c25e15042ce3b8533c723
-2011-06-01T13:21:20.788944Z
-7701
-jcw
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-10707
-
 font_courBO14.h
 file
 
@@ -7063,6 +7029,40 @@ has-props
 
 
 9685
+
+font_lutBS14.h
+file
+
+
+
+
+2011-06-27T11:01:29.050188Z
+8db4c081868c25e15042ce3b8533c723
+2011-06-01T13:21:20.788944Z
+7701
+jcw
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+10707
 
 font_clR6x12.h
 file
@@ -7098,14 +7098,14 @@ has-props
 
 2580
 
-font_lubI19.h
+font_helvB14.h
 file
 
 
 
 
 2011-06-27T11:01:29.058188Z
-d1947f4a39ae571942752b47338fb820
+7961effbb2ab4ef89bc5b466bc56b452
 2011-06-01T13:21:20.788944Z
 7701
 jcw
@@ -7130,7 +7130,7 @@ has-props
 
 
 
-15321
+9799
 
 font_lubBI08.h
 file
@@ -7166,14 +7166,14 @@ has-props
 
 6301
 
-font_helvB14.h
+font_lubI19.h
 file
 
 
 
 
 2011-06-27T11:01:29.058188Z
-7961effbb2ab4ef89bc5b466bc56b452
+d1947f4a39ae571942752b47338fb820
 2011-06-01T13:21:20.788944Z
 7701
 jcw
@@ -7198,7 +7198,7 @@ has-props
 
 
 
-9799
+15321
 
 font_timI24.h
 file
@@ -7608,40 +7608,6 @@ has-props
 
 7952
 
-font_timB14.h
-file
-
-
-
-
-2011-06-27T11:01:29.082188Z
-9e7a49e51086afc012244e37b2da599f
-2011-06-01T13:21:20.788944Z
-7701
-jcw
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-9608
-
 font_clR7x10.h
 file
 
@@ -7675,6 +7641,40 @@ has-props
 
 
 2652
+
+font_timB14.h
+file
+
+
+
+
+2011-06-27T11:01:29.082188Z
+9e7a49e51086afc012244e37b2da599f
+2011-06-01T13:21:20.788944Z
+7701
+jcw
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+9608
 
 font_ncenI08.h
 file
@@ -8254,40 +8254,6 @@ has-props
 
 5673
 
-font_lubR18.h
-file
-
-
-
-
-2011-06-27T11:01:29.110188Z
-b96696541987967da225a7dedbcb1966
-2011-06-01T13:21:20.788944Z
-7701
-jcw
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-13997
-
 font_luBS08.h
 file
 
@@ -8321,6 +8287,40 @@ has-props
 
 
 6147
+
+font_lubR18.h
+file
+
+
+
+
+2011-06-27T11:01:29.110188Z
+b96696541987967da225a7dedbcb1966
+2011-06-01T13:21:20.788944Z
+7701
+jcw
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+13997
 
 font_charB12.h
 file
@@ -8356,40 +8356,6 @@ has-props
 
 9197
 
-font_6x9.h
-file
-
-
-
-
-2011-06-27T11:01:29.114188Z
-b0042e75eab313b1da14c9cffcb2297d
-2011-06-01T13:21:20.788944Z
-7701
-jcw
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-2061
-
 font_clR6x8.h
 file
 
@@ -8424,14 +8390,14 @@ has-props
 
 2040
 
-font_ncenB24.h
+font_6x9.h
 file
 
 
 
 
-2011-06-27T11:01:29.118188Z
-ed168bc56de2358ccaacdd33ebb542f2
+2011-06-27T11:01:29.114188Z
+b0042e75eab313b1da14c9cffcb2297d
 2011-06-01T13:21:20.788944Z
 7701
 jcw
@@ -8456,7 +8422,7 @@ has-props
 
 
 
-23913
+2061
 
 font_charI14.h
 file
@@ -8492,14 +8458,14 @@ has-props
 
 9865
 
-font_luRS08.h
+font_ncenB24.h
 file
 
 
 
 
 2011-06-27T11:01:29.118188Z
-126a386d3c676d76e6060ed4fe5f6972
+ed168bc56de2358ccaacdd33ebb542f2
 2011-06-01T13:21:20.788944Z
 7701
 jcw
@@ -8524,7 +8490,7 @@ has-props
 
 
 
-5547
+23913
 
 font_charBI14.h
 file
@@ -8560,6 +8526,40 @@ has-props
 
 11238
 
+font_luRS08.h
+file
+
+
+
+
+2011-06-27T11:01:29.118188Z
+126a386d3c676d76e6060ed4fe5f6972
+2011-06-01T13:21:20.788944Z
+7701
+jcw
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+5547
+
 font_lubBI10.h
 file
 
@@ -8594,40 +8594,6 @@ has-props
 
 7745
 
-font_lutBS24.h
-file
-
-
-
-
-2011-06-27T11:01:29.122188Z
-a7096a0c43ec22ca1d5f9b091be367e4
-2011-06-01T13:21:20.788944Z
-7701
-jcw
-has-props
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-23672
-
 font_courBO24.h
 file
 
@@ -8661,6 +8627,40 @@ has-props
 
 
 20832
+
+font_lutBS24.h
+file
+
+
+
+
+2011-06-27T11:01:29.122188Z
+a7096a0c43ec22ca1d5f9b091be367e4
+2011-06-01T13:21:20.788944Z
+7701
+jcw
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+23672
 
 font_charR12.h
 file
