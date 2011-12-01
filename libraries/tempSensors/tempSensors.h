@@ -11,11 +11,11 @@ DeviceAddress panelAmbID = { 0x28, 0x43, 0x35, 0xEC, 0x02, 0x00, 0x00, 0x70 };
 
 MilliTimer tempTimerPanel; // timer to time between ask and read temp on the ds18
 int tempWaitTime = 1000; // to time between ask and read temp on the ds18
-int tankMin = 600; // minimum tank temperature
-int tankMax = 950; // maximum tank temperature
-int afterHeaterMax = 900; // maximum temperature after heater
-int tankAuxMax = 750; // maximum tank temperature when heating with GAS
-int tankAuxMin = 600; // minimum tank temperature when heating with GAS
+int tankMin = 490; // minimum tank temperature
+int tankMax = 900; // maximum tank temperature
+int afterHeaterMax = 870; // maximum temperature after heater
+int tankAuxMax = 600; // maximum tank temperature when heating with GAS
+int tankAuxMin = 500; // minimum tank temperature when heating with GAS
 
 // sensors structure
 typedef struct {

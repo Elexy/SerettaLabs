@@ -13,14 +13,14 @@ PortI2C myI2C (2);
 LiquidCrystalI2C lcd (myI2C);
 
 byte celsius[8] = {
-	B01110,
-	B01010,
-	B01110,
-	B00000,
-	B00000,
-	B00000,
-	B00000,
-	B00000
+  B01110,
+  B01010,
+  B01110,
+  B00000,
+  B00000,
+  B00000,
+  B00000,
+  B00000
 };
 
 static byte getMotion() {
@@ -39,6 +39,7 @@ static byte getLight() {
 
 static MilliTimer reportTimer;  // don't report too often, unless moved
 static MilliTimer blTimer;  // don't report too often, unless moved
+//static MilliTimer receiveTimer;  // 
 static byte prevMotion;         // track motion detector state
 MilliTimer sendTimerPanel; // to time sending msgs 
 MilliTimer lcdTimer; // to time refresh lcd
@@ -46,8 +47,14 @@ roomBoard roomData;
 casitaData casita;
 panelData panels;
 
+// has to be defined because we're using the watchdog for low-power waiting
+ISR(WDT_vect) { 
+  Sleepy::watchdogEvent(); 
+}
+
 static void shtDelay () {
-  delay(32);
+  //  delay(32);
+  Sleepy::loseSomeTime(32); // must wait at least 20 ms
 }
 
 // this code is called once per second, but not all calls will be reported
@@ -69,7 +76,7 @@ static void newReadings() {
       roomData.humi = humi + 0.5;
       roomData.temp = 10 * temp + 0.5;
     }
-       roomData.lobat = rf12_lowbat();
+    roomData.lobat = rf12_lowbat();
   }
 }
 
@@ -98,51 +105,52 @@ void secondLine()
     lcd.print("                "); //clear line
     lcd.setCursor(0, 1);
     switch (count) {
-      case 0 :
-        lcd.print("fp:");
-        lcd.print((int) casita.floorPump);
-        lcd.print(" fl:");
-        lcd.print((int) casita.floorFlow);
-        break;
-      case 1 :
-        lcd.print("tt");
-        lcdPrintDec(casita.tankTop);
-//        lcd.write(3);
-        lcd.print("tb");
-        lcdPrintDec(casita.tankBottom);       
-        break;
-      case 2 :
-        lcd.print("pi");
-        lcdPrintDec(panels.tempIn);
-        lcd.print("po");
-        lcdPrintDec(panels.tempOut);
-        lcd.write(3);        
-        lcd.print("p");
-        lcd.print(casita.solarPump ? 1 : 0);        
-        break;      
-      case 3 :        
-        lcd.print("xo:");
-        lcdPrintDec(casita.xchangeOut);
-        lcd.write(3);
-        lcd.print("ah:");
-        lcdPrintDec(casita.afterHeater);
-        lcd.write(3);
-        break;      
-      case 4:
-        lcd.print("ti");
-        lcdPrintDec(casita.tankIn);
-        lcd.print("hp");
-        if(casita.errorCode == 1) {
-          lcd.print("error");
-        } else {
-          lcd.print(casita.heaterPump ? 1 : 0);
-        }
-        break;
-      default :
-        lcd.print("pump:");
-        lcd.print(casita.floorPump);
-        lcd.print(" flow:");
-        lcd.print(casita.floorFlow);
+    case 0 :
+      lcd.print("fp:");
+      lcd.print((int) casita.floorPump);
+      lcd.print(" fl:");
+      lcd.print((int) casita.floorFlow);
+      break;
+    case 1 :
+      lcd.print("tt");
+      lcdPrintDec(casita.tankTop);
+      //        lcd.write(3);
+      lcd.print("tb");
+      lcdPrintDec(casita.tankBottom);       
+      break;
+    case 2 :
+      lcd.print("pi");
+      lcdPrintDec(panels.tempIn);
+      lcd.print("po");
+      lcdPrintDec(panels.tempOut);
+      lcd.write(3);        
+      lcd.print("p");
+      lcd.print(casita.solarPump ? 1 : 0);        
+      break;      
+    case 3 :        
+      lcd.print("xo:");
+      lcdPrintDec(casita.xchangeOut);
+      lcd.write(3);
+      lcd.print("ah:");
+      lcdPrintDec(casita.afterHeater);
+      lcd.write(3);
+      break;      
+    case 4:
+      lcd.print("ti");
+      lcdPrintDec(casita.tankIn);
+      lcd.print("hp");
+      if(casita.errorCode == 1) {
+        lcd.print("error");
+      } 
+      else {
+        lcd.print(casita.heaterPump ? 1 : 0);
+      }
+      break;
+    default :
+      lcd.print("pump:");
+      lcd.print(casita.floorPump);
+      lcd.print(" flow:");
+      lcd.print(casita.floorFlow);
     }
     count = (count + 1) % 5;
   }
@@ -152,6 +160,9 @@ void secondLine()
  * Function receive data
  */
 void receive () {
+  rf12_sleep(RF12_WAKEUP);
+  rf12_recvDone();
+  delay(100); // wait for the rf to come alive
   // data from the casita
   if (rf12_recvDone() && rf12_crc == 0) {
     Serial.println("received packet");
@@ -170,9 +181,10 @@ void receive () {
       casita.afterHeater= buf->afterHeater;
       casita.errorCode = buf->errorCode;
       casita.heaterPump = buf->heaterPump;
-    } else if ((RF12_HDR_MASK & rf12_hdr) == panelsID) { //paneldata
+    } 
+    else if ((RF12_HDR_MASK & rf12_hdr) == panelsID) { //paneldata
       panelData* buf =  (panelData*) rf12_data;
-Serial.println("received paneldata");
+      Serial.println("received paneldata");
       roomData.panelOut = panels.tempOut = buf->tempOut; //relay panelouttemp
       panels.tempIn  = buf->tempIn;
       panels.tempAmb = buf->tempAmb;
@@ -186,11 +198,12 @@ Serial.println("received paneldata");
       Serial.println((int) panels.tempOut);
     }
   } 
+  rf12_sleep(RF12_SLEEP);        
   /*else {
-    roomBoard roomData;
-    casitaData casita;
-    panelData panels;
-  }*/
+   roomBoard roomData;
+   casitaData casita;
+   panelData panels;
+   }*/
 }
 
 void setup() {
@@ -215,7 +228,7 @@ void setup() {
   pir_ldr.mode2(INPUT);
   pir_ldr.digiWrite2(1);  // pull-up AIO
 
-  roomData.dTemp = 206;
+  roomData.dTemp = 205;
 }
 
 //boolean heater = false;
@@ -223,25 +236,31 @@ void setup() {
 
 void loop() {
   receive();
-  if (roomData.temp <= roomData.dTemp - 1)
+
+  if (roomData.temp <= roomData.dTemp - 1
+    &&
+    panels.tempAmb <= roomData.dTemp -15)
   {      
     roomData.heat = 1;
   } 
-  if (roomData.temp >roomData.dTemp + 1) {
+  if (roomData.temp >roomData.dTemp + 1
+    ||
+    panels.tempAmb >= roomData.dTemp -15) {
     roomData.heat = 0; 
   }
-  
+
   if(roomData.moved) {
     lcd.display();
     lcd.backlight();    
     blTimer.set(30000);
   }
-  
+
   if(blTimer.poll() && !roomData.moved) {
     lcd.noBacklight();
     lcd.noDisplay();
+    Sleepy::loseSomeTime(500);
   }
-  
+
   // set the cursor to column 0, line 1
   lcd.setCursor(0, 0);
   // print the current temp
@@ -252,14 +271,14 @@ void loop() {
   lcd.write(3);
   lcd.print("");
   lcd.print((int) roomData.heat);
-    
+
   secondLine();
-  
+
   roomData.auxHeat = 1;   
-  
+
   if (sendTimerPanel.poll(2000)) {
     newReadings();    
-    
+
     Serial.print((int) roomData.light);
     Serial.print(' ');
     Serial.print((int) roomData.moved);
@@ -273,11 +292,14 @@ void loop() {
     Serial.println(casita.errorCode);
     Serial.print(" ");
     Serial.println(roomData.heat ? '1' : '0');
+    rf12_sleep(RF12_WAKEUP);
     while (!rf12_canSend())
-      rf12_recvDone();
+      rf12_recvDone();    
     rf12_sendStart(0, &roomData, sizeof roomData);            
-    rf12_sendWait(2);
-    
-  }
+    rf12_sendWait(2);    
+    rf12_sleep(RF12_SLEEP);        
+  }  
 }
+
+
 

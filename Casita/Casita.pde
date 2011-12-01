@@ -130,9 +130,9 @@ byte heaterCounter = 0;
 void loop() {
   receive();
   
-  if(payloadData.panelOut > payloadData.tankTop + 100) { // turn on if tankop + 10 degrees
+  if(payloadData.panelOut > payloadData.tankTop + 100) { // turn on if tanktop + 10 degrees
     payloadData.solarPump = true;
-  } else if(payloadData.tankIn < payloadData.tankTop + 20){ //turn off at tantop + 2 degrees
+  } else if(payloadData.panelOut < payloadData.tankTop + 50){ //turn off at tanktop + 2 degrees
     payloadData.solarPump = false;
   }
   
@@ -168,6 +168,7 @@ void loop() {
           Serial.println((int) payloadData.afterHeater);
           auxHeater = true;
           auxHeaterAskTemp = false;        
+          heaterCounter = 0;
         }
         else
         {

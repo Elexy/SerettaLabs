@@ -46,12 +46,12 @@ void loop() {
     } else if(sensors[sensorPointer].desc == "tempAmb") {
       payloadData.tempAmb = readTemp1wire(sensors[sensorPointer].id);
       // only send once per cycle, every 3 mins
-      rf12_sleep(-1);
+      rf12_sleep(RF12_WAKEUP);
       while (!rf12_canSend())
         rf12_recvDone();    
       rf12_sendStart(0, &payloadData, sizeof payloadData);
       rf12_sendWait(2);
-      rf12_sleep(0);
+      rf12_sleep(RF12_SLEEP);
     }      
     //  payloadData.mem = readTemp1wire(sensors[sensorPointer].id)
     sensorPointer = (sensorPointer + 1) % 3;    

@@ -65,7 +65,7 @@ void loop () {
   average = total / numReadings;  
   payload.volts = average;
   
-  if(supplyVoltage() > 2780) {
+  if(supplyVoltage() > 2880) {
     dumpSwitch(false); // at voltages over 27.6 switch to dumpload
   } else {
     dumpSwitch(true); // at voltages under 27.6 switch to battery charging
