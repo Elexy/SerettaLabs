@@ -228,7 +228,7 @@ void setup() {
   pir_ldr.mode2(INPUT);
   pir_ldr.digiWrite2(1);  // pull-up AIO
 
-  roomData.dTemp = 205;
+  roomData.dTemp = 18.5;
 }
 
 //boolean heater = false;
@@ -253,12 +253,14 @@ void loop() {
     lcd.display();
     lcd.backlight();    
     blTimer.set(30000);
+    rf12_sleep(RF12_WAKEUP);
   }
 
   if(blTimer.poll() && !roomData.moved) {
     lcd.noBacklight();
     lcd.noDisplay();
-    Sleepy::loseSomeTime(500);
+    rf12_sleep(RF12_SLEEP);
+    Sleepy::loseSomeTime(1000);
   }
 
   // set the cursor to column 0, line 1
