@@ -2,10 +2,30 @@
 #include <RF12.h>
 
 Port buttons (1);
-Port sleepToggle (1);
+Port press (1);
 
 MilliTimer awakeTimer;
+boolean sleep = false;
 
+void sleepToggle()
+{
+  delay(500);
+  Serial.println("interrupt");
+  if(sleep)
+  {
+    sleep = false;
+    Serial.println("wakeup");
+  } 
+  else 
+  {
+    Serial.println("sleep");
+    sleep = true;    
+  }
+}
+
+ISR(PCINT2_vect) { sleepToggle(); }
+
+// has to be defined because we're using the watchdog for low-power waiting
 ISR(WDT_vect) { Sleepy::watchdogEvent(); }
   
 void setup()
@@ -16,18 +36,14 @@ void setup()
   rf12_easyInit(5); // throttle packet sending to at least 5 seconds apart
 
   buttons.mode2(INPUT);
-  sleepToggle.mode3(INPUT);
-  attachInterrupt(1, wakeUp, RISING);
-}
-
-void wakeUp()
-{
-  Serial.println("interrupt");
+  press.mode(INPUT);
+  bitSet(PCMSK2, 4);
+  bitSet(PCICR, PCIE2);
 }
 
 int getButtonDirection(int value)
 {
-  Sleepy::loseSomeTime(500);
+  if(sleep) Sleepy::loseSomeTime(5000);
   if(value >= 680 && value <= 700) return 1;
   if(value >= 745 && value <= 765) return 2;
   if(value >= 815 && value <= 830) return 3;

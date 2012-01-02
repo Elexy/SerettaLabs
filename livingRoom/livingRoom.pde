@@ -228,7 +228,7 @@ void setup() {
   pir_ldr.mode2(INPUT);
   pir_ldr.digiWrite2(1);  // pull-up AIO
 
-  roomData.dTemp = 18.5;
+  roomData.dTemp = 195;
 }
 
 //boolean heater = false;
