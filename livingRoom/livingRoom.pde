@@ -228,7 +228,7 @@ void setup() {
   pir_ldr.mode2(INPUT);
   pir_ldr.digiWrite2(1);  // pull-up AIO
 
-  roomData.dTemp = 195;
+  roomData.dTemp = 192;
 }
 
 //boolean heater = false;
@@ -237,15 +237,16 @@ void setup() {
 void loop() {
   receive();
 
-  if (roomData.temp <= roomData.dTemp - 1
-    &&
-    panels.tempAmb <= roomData.dTemp -15)
+  if (roomData.temp <= roomData.dTemp - 1)
+//    &&
+//    panels.tempAmb <= roomData.dTemp -15)
   {      
     roomData.heat = 1;
   } 
-  if (roomData.temp >roomData.dTemp + 1
-    ||
-    panels.tempAmb >= roomData.dTemp -15) {
+  if (roomData.temp >roomData.dTemp + 1)
+//    ||
+//    panels.tempAmb >= roomData.dTemp -15) {
+  { 
     roomData.heat = 0; 
   }
 
@@ -281,6 +282,7 @@ void loop() {
   if (sendTimerPanel.poll(2000)) {
     newReadings();    
 
+    Serial.println(roomData.heat ? "heat" : "noheat");
     Serial.print((int) roomData.light);
     Serial.print(' ');
     Serial.print((int) roomData.moved);
@@ -293,7 +295,7 @@ void loop() {
     Serial.print("errorCode: ");
     Serial.println(casita.errorCode);
     Serial.print(" ");
-    Serial.println(roomData.heat ? '1' : '0');
+    
     rf12_sleep(RF12_WAKEUP);
     while (!rf12_canSend())
       rf12_recvDone();    

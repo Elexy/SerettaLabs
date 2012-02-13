@@ -19,7 +19,9 @@ OneWire ds18b20 (6); // 1-wire temperature sensors, uses DIO port 4
 #include <tempSensors.h>
 
 MilliTimer sendTimerPanel; // to time sending msgs 
-MilliTimer auxHeatTimer; // to time sending msgs 
+MilliTimer auxHeaterTimer; // to time delay for measuring if heater came on
+MilliTimer auxHeaterWaitTimer; // to time delay restarting gasheater
+
 unsigned long receivedTime = 0; // to expire pump on message
 byte needToSend = false;
 boolean tempAsked = false;
@@ -31,6 +33,7 @@ volatile int NbTopsFan; //measuring the rising edges of the signal
 int Calc;                               
 int sensorPointer;  // pointer to step though sensors
 boolean auxHeater = false;
+boolean pumpSwitch = false;
 
 // sensors we will read here
 SensorInfo sensors[5] = {
@@ -40,15 +43,6 @@ SensorInfo sensors[5] = {
     {afterHeaterID, "afterHeater" },
     {tankBottomID, "tankBottom"}, 
 };
-
-/**
- * Interupt controller for the flow meter
- */
-void rpm ()     //This is the function that the interupt calls 
-{ 
-  NbTopsFan++;  //This function measures the rising and falling edge of the hall effect sensors signal
-}
-
 
 /**
  * Function receive data
@@ -67,8 +61,6 @@ void receive () {
       roomData.auxHeat = buf->auxHeat;
       payloadData.panelOut = buf->panelOut;
           
-      Serial.print("received thermostat packet: ");
-      Serial.println(payloadData.floorPump ? "heat" : "no heat");
   //    Serial.println(payloadData.fpPwm);
   //    Serial.println(payloadData.solarPump ? "solPump" : "no solPump");
       receivedTime = millis();
@@ -83,6 +75,7 @@ void receive () {
       payloadData.panelOut = buf->tempOut;
       Serial.print("received panels packet: ");
       Serial.println(payloadData.panelOut);
+      receivedTime = millis();
     }
   }
 }
@@ -95,14 +88,10 @@ void setup() {
   rf12_easyInit(5); // throttle packet sending to at least 5 seconds apart
 
   floorPump.mode(OUTPUT); //port 2 DIO
-//  floorPump.digiWrite(true); //inverted switch so off is high
  
   payloadData.floorPump = false;
   payloadData.fpPwm = 100;
 
-  //solarPump.mode2(OUTPUT);
-  //solarPump.digiWrite2(true);  //inverted switch so off is high
-  
   solarAuxPump.mode2(OUTPUT); //port 3 AIO
 
   payloadData.panelOut = 0;
@@ -111,12 +100,11 @@ void setup() {
   
   heaterPump.mode2(OUTPUT); //real mosfet plug port 2 AIO
   
-  flowFloor.mode3(INPUT);
-  attachInterrupt(1, rpm, RISING);
-
   sensorPointer = 0; //start with the first sensor
   
   auxHeater = false;
+  auxHeaterWaitTimer.set(10);
+  auxHeaterTimer.set(1);
 }
 
 #define minFloorInTemp 350
@@ -129,39 +117,46 @@ boolean auxHeaterAskTemp = false;
  */
 void loop() {
   receive();
-  
-  if(payloadData.panelOut > payloadData.tankTop + 100) { // turn on if tanktop + 10 degrees
+
+  if(payloadData.panelOut > (payloadData.tankTop + 100)) { // turn on if tanktop + 10 degrees
     payloadData.solarPump = true;
-  } else if(payloadData.panelOut < payloadData.tankTop + 50){ //turn off at tanktop + 2 degrees
+  } else if(payloadData.panelOut < (payloadData.tankTop + 50)){ //turn off at tanktop + 2 degrees
     payloadData.solarPump = false;
   }
 
-//run gas heater if tank too cold
-  if(payloadData.tankTop < tankAuxMin || auxHeater) //payloadData.tankTop > 200
+
+// check if heater is working
+//Serial.println((int) auxHeaterTimer.poll());
+  if( auxHeater && (payloadData.afterHeater <(payloadData.tankBottom+100)))
   {
-    //make sure the heater comes on
-    if(auxHeatTimer.poll(60000))
+    if(auxHeaterTimer.poll() ) 
     {
-      if(auxHeaterAskTemp)
+      Serial.println("test gasheater FAILED");
+      auxHeater = false;
+//      if(heaterCounter++ >= 5) payloadData.errorCode = 1;
+      auxHeaterWaitTimer.set(20000); 
+      auxHeaterTimer.set(1);      
+    }
+  }  
+  
+  //run gas heater if tank too cold
+  if((payloadData.tankTop < tankAuxMin) || auxHeater) //payloadData.tankTop > 200
+  {
+    if(auxHeaterWaitTimer.poll())
+    {
+      auxHeater = true;
+      if(auxHeaterTimer.poll()) 
       {
-        Serial.print("set heaterTemp: ");
-        Serial.println((int) payloadData.afterHeater);
-        auxHeater = true;
-        auxHeaterAskTemp = false;        
-        heaterCounter = 0;
+        auxHeaterTimer.set(55000);
+        Serial.println("set heatertimer to 55sec");
       }
-      else
-      {
-        if(payloadData.afterHeater < payloadData.tankBottom+100) 
-        {
-          Serial.println("     heater off");
-          auxHeater = false;
-          if(heaterCounter++ >= 5) payloadData.errorCode = 1;
-        }
-        auxHeaterAskTemp = true;
-      }
-    }    
+    }
   } 
+  else
+  {
+    auxHeater = false;
+  }
+
   // overheat protection
   if(payloadData.tankTop >= tankMax) {
     auxHeater = false;
@@ -171,29 +166,24 @@ void loop() {
   // turn off when hot enough with gas heater
   if((payloadData.tankTop >= tankAuxMax)
     ||
-    (payloadData.afterHeater >= afterHeaterMax)
-    ||
-    (payloadData.solarPump))
-    auxHeater = false;
+    (payloadData.afterHeater >= afterHeaterMax))
+    {
+      auxHeater = false;
+      Serial.println("gasheater off hot enough");
+    }
   
-  solarAuxPump.digiWrite2((payloadData.solarPump));
+  solarAuxPump.digiWrite2(payloadData.solarPump);
 
-  floorPump.digiWrite(payloadData.floorPump);
+  floorPump.digiWrite(payloadData.floorPump && pumpSwitch);
   
   payloadData.heaterPump = auxHeater; // && payloadData.errorCode != 1 ? 1 : 0;
-  heaterPump.digiWrite2(payloadData.heaterPump);  
+  heaterPump.digiWrite2(payloadData.heaterPump && !pumpSwitch);  
+  
+  pumpSwitch = !pumpSwitch;
   
   if (tempAsked && tempTimerPanel.poll())
     {
-      // Get flow
-      cli();      //Disable interrupts
-      payloadData.floorFlow = (NbTopsFan / 7.5) * 10; //(Pulse frequency) / 7.5Q * 10 = e-1 C flow rate Liter / min 
-      
-      Serial.print("Read temp ");
-      Serial.println(sensorPointer);
-      Serial.print(sensors[sensorPointer].desc);
-      Serial.println(readTemp1wire(sensors[sensorPointer].id));
-      if(sensors[sensorPointer].desc == "tankTop") {
+       if(sensors[sensorPointer].desc == "tankTop") {
         payloadData.tankTop = readTemp1wire(sensors[sensorPointer].id);
       } else if(sensors[sensorPointer].desc == "tankIn") {
         payloadData.tankIn = readTemp1wire(sensors[sensorPointer].id);
@@ -203,17 +193,12 @@ void loop() {
         payloadData.afterHeater = readTemp1wire(sensors[sensorPointer].id);
       } else if(sensors[sensorPointer].desc == "tankBottom") {
         payloadData.tankBottom = readTemp1wire(sensors[sensorPointer].id);
-        Serial.println(readTemp1wire(sensors[sensorPointer].id)); 
       }      
       sensorPointer = (sensorPointer + 1) % 5;
       tempAsked = false;
     }
     else if(!tempAsked)
     {
-      // Start counting flow
-      NbTopsFan = 0;   //Set NbTops to 0 ready for calculations
-      sei(); // Enable interupts
-      Serial.println("Ask temp ");
       askTemp1Wire(sensors[sensorPointer].id);
       tempAsked = true;
       //set sensorwait timer
@@ -225,15 +210,25 @@ void loop() {
       rf12_recvDone();     
     rf12_sendStart(0, &payloadData, sizeof payloadData);
     Serial.print("gas heater :");
-    Serial.println(payloadData.heaterPump ? "ON" : "OFF");
-    Serial.print("floorpump:");
-    Serial.println(payloadData.floorPump ? "ON" : "OFF");
-    Serial.print("solarpump:");
+    Serial.print(payloadData.heaterPump ? "ON" : "OFF");
+    Serial.print(" floorpump:");
+    Serial.print(payloadData.floorPump ? "ON" : "OFF");
+    Serial.print(" solarpump:");
     Serial.println(payloadData.solarPump ? "ON" : "OFF");
-    Serial.print("Temperatuur tank top: ");
+    Serial.print("tt:");
     Serial.print(payloadData.tankTop);
-    Serial.println(" C");
-    Serial.print(payloadData.floorFlow, DEC); //Prints the number calculated above
-    Serial.print(" C L/min\r\n"); //Prints "L/hour" and returns a  new line 
+    Serial.print(" tb:");
+    Serial.print(payloadData.tankBottom);
+    Serial.print(" ah:");
+    Serial.print(payloadData.afterHeater);
+    Serial.print(" xo:");
+    Serial.print(payloadData.xchangeOut);
+    Serial.print(" po:");
+    Serial.print(payloadData.panelOut);
+    Serial.print(" HT:");
+    Serial.print((int) auxHeaterTimer.remaining());
+    Serial.print(" HwT:");
+    Serial.println((int) auxHeaterWaitTimer.remaining());
+
   }
 }
