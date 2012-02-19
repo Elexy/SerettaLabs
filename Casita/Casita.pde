@@ -8,6 +8,9 @@
 #include <OneWire.h>
 #include <payload.h>
 
+#define SERIAL  1   // set to 1 to also report readings on the serial port
+#define DEBUG   0   // set to 1 to display each loop() run and PIR trigger
+
 Port flowFloor (3); // The floorheating flow measurement
 Port heaterPump (2); // gives power to the heater pump on the 
 Port floorPump (2);  // the floor pump driver (fet) port 3 Dio
@@ -44,6 +47,10 @@ SensorInfo sensors[5] = {
     {tankBottomID, "tankBottom"}, 
 };
 
+enum { MEASURE, REPORT, TASK_END };
+
+static word schedbuf[TASK_END];
+Scheduler scheduler (schedbuf, TASK_END);
 /**
  * Function receive data
  */
@@ -105,8 +112,6 @@ void setup() {
   auxHeaterTimer.set(1);
 }
 
-#define minFloorInTemp 350
-boolean heat = false;
 byte heaterCounter = 0;
 boolean auxHeaterAskTemp = false;
 
@@ -130,11 +135,12 @@ void loop() {
   }  
   else
   {
+    // settimr for 55 seconds
     auxHeaterTimer.set(55000);
   }
   
   //run gas heater if tank too cold
-  if((payloadData.tankTop < tankAuxMin) || auxHeater) //payloadData.tankTop > 200
+  if((payloadData.tankTop < tankAuxMin) || auxHeater) 
   {
     if(auxHeaterWaitTimer.poll())
     {      
@@ -167,6 +173,9 @@ void loop() {
  //     Serial.println("gasheater off hot enough");
     }
  
+ // give solar preference if the floorpump isn't on
+  if(auxHeater && payloadData.solarPump) auxHeater = !floorPump;
+    
   if(payloadData.panelOut > (payloadData.tankTop + 100)
     && !auxHeater) { // turn on if tanktop + 10 degrees
     payloadData.solarPump = true;
