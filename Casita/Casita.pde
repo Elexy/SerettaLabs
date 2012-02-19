@@ -73,8 +73,6 @@ void receive () {
       panelData* buf =  (panelData*) rf12_data;
 
       payloadData.panelOut = buf->tempOut;
-      Serial.print("received panels packet: ");
-      Serial.println(payloadData.panelOut);
       receivedTime = millis();
     }
   }
@@ -118,37 +116,33 @@ boolean auxHeaterAskTemp = false;
 void loop() {
   receive();
 
-  if(payloadData.panelOut > (payloadData.tankTop + 100)) { // turn on if tanktop + 10 degrees
-    payloadData.solarPump = true;
-  } else if(payloadData.panelOut < (payloadData.tankTop + 50)){ //turn off at tanktop + 2 degrees
-    payloadData.solarPump = false;
-  }
-
-
-// check if heater is working
-//Serial.println((int) auxHeaterTimer.poll());
+  // check if heater is working
   if( auxHeater && (payloadData.afterHeater <(payloadData.tankBottom+100)))
   {
     if(auxHeaterTimer.poll() ) 
     {
-      Serial.println("test gasheater FAILED");
+//      Serial.println("test gasheater FAILED");
       auxHeater = false;
 //      if(heaterCounter++ >= 5) payloadData.errorCode = 1;
       auxHeaterWaitTimer.set(20000); 
       auxHeaterTimer.set(1);      
     }
   }  
+  else
+  {
+    auxHeaterTimer.set(55000);
+  }
   
   //run gas heater if tank too cold
   if((payloadData.tankTop < tankAuxMin) || auxHeater) //payloadData.tankTop > 200
   {
     if(auxHeaterWaitTimer.poll())
-    {
+    {      
       auxHeater = true;
       if(auxHeaterTimer.poll()) 
       {
         auxHeaterTimer.set(55000);
-        Serial.println("set heatertimer to 55sec");
+//        Serial.println("set heatertimer to 55sec");
       }
     }
   } 
@@ -161,25 +155,34 @@ void loop() {
   if(payloadData.tankTop >= tankMax) {
     auxHeater = false;
     payloadData.solarPump = false;
-    Serial.println("gasheater & solarpump off");
+ //   Serial.println("gasheater & solarpump off");
   }
+
   // turn off when hot enough with gas heater
   if((payloadData.tankTop >= tankAuxMax)
     ||
     (payloadData.afterHeater >= afterHeaterMax))
     {
       auxHeater = false;
-      Serial.println("gasheater off hot enough");
+ //     Serial.println("gasheater off hot enough");
     }
+ 
+  if(payloadData.panelOut > (payloadData.tankTop + 100)
+    && !auxHeater) { // turn on if tanktop + 10 degrees
+    payloadData.solarPump = true;
+  } else if(payloadData.panelOut < (payloadData.tankTop + 50)
+  || auxHeater){ //turn off at tanktop + 2 degrees
+    payloadData.solarPump = false;
+  }
   
   solarAuxPump.digiWrite2(payloadData.solarPump);
 
-  floorPump.digiWrite(payloadData.floorPump && pumpSwitch);
+  floorPump.digiWrite(payloadData.floorPump);
   
   payloadData.heaterPump = auxHeater; // && payloadData.errorCode != 1 ? 1 : 0;
-  heaterPump.digiWrite2(payloadData.heaterPump && !pumpSwitch);  
+  heaterPump.digiWrite2(payloadData.heaterPump );  
   
-  pumpSwitch = !pumpSwitch;
+  //pumpSwitch = !pumpSwitch;
   
   if (tempAsked && tempTimerPanel.poll())
     {
@@ -209,7 +212,7 @@ void loop() {
     while (!rf12_canSend())
       rf12_recvDone();     
     rf12_sendStart(0, &payloadData, sizeof payloadData);
-    Serial.print("gas heater :");
+    /*Serial.print("gas heater :");
     Serial.print(payloadData.heaterPump ? "ON" : "OFF");
     Serial.print(" floorpump:");
     Serial.print(payloadData.floorPump ? "ON" : "OFF");
@@ -228,7 +231,6 @@ void loop() {
     Serial.print(" HT:");
     Serial.print((int) auxHeaterTimer.remaining());
     Serial.print(" HwT:");
-    Serial.println((int) auxHeaterWaitTimer.remaining());
-
+    Serial.println((int) auxHeaterWaitTimer.remaining());*/
   }
 }

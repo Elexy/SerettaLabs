@@ -13,7 +13,7 @@ MilliTimer tempTimerPanel; // timer to time between ask and read temp on the ds1
 int tempWaitTime = 750; // to time between ask and read temp on the ds18
 int tankMin = 490; // minimum tank temperature
 int tankMax = 900; // maximum tank temperature
-int afterHeaterMax = 870; // maximum temperature after heater
+int afterHeaterMax = 800; // maximum temperature after heater
 int tankAuxMax = 670; // maximum tank temperature when heating with GAS
 int tankAuxMin = 650; // minimum tank temperature when heating with GAS
 
