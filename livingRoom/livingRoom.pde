@@ -228,7 +228,7 @@ void setup() {
   pir_ldr.mode2(INPUT);
   pir_ldr.digiWrite2(1);  // pull-up AIO
 
-  roomData.dTemp = 201;
+  roomData.dTemp = 205;
 }
 
 //boolean heater = false;
@@ -237,15 +237,15 @@ void setup() {
 void loop() {
   receive();
 
-  if (roomData.temp <= roomData.dTemp - 1)
-//    &&
-//    panels.tempAmb <= roomData.dTemp -15)
+  if (roomData.temp <= roomData.dTemp - 1
+      ||
+      panels.tempAmb <= roomData.dTemp -35)
   {      
     roomData.heat = 1;
   } 
-  if (roomData.temp >roomData.dTemp + 1)
-//    ||
-//    panels.tempAmb >= roomData.dTemp -15) {
+  if (roomData.temp >roomData.dTemp + 1
+      ||
+      panels.tempAmb >= roomData.dTemp -15) 
   { 
     roomData.heat = 0; 
   }
